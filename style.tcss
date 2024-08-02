@@ -1,0 +1,45 @@
+
+
+FeatureViewer {
+    width: 100%;
+    background: $surface;
+    padding-top: 1;
+    overflow-y: scroll;
+    scrollbar-size-vertical: 2
+}
+
+FeatureViewer .featurevier--label {
+    color: $secondary-darken-1;
+    text-opacity: 50%;
+}
+
+FeatureViewer .featurevier--cds {
+    background: red;
+}
+
+
+LocalViewport {
+    height: 60%;
+    border: solid green;
+}
+
+
+PositionBar {
+    height: 2;
+    background: $panel;
+    color: $accent;
+    margin-right: 2;
+
+    #left{
+        text-align: left;
+        width: 1fr;
+    }
+    #middle{
+        text-align: center;
+        width: 1fr;
+    }
+    #right{
+        text-align: right;
+        width: 1fr;
+    }
+}    
