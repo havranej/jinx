@@ -101,13 +101,35 @@ class FeatureViewer(ScrollView):
     
 
     class Scrolled(Message):
-        """Color selected message."""
+        """Indicates that a scroll has happened"""
 
         def __init__(self, position, zoom, width) -> None:
             self.position = position
             self.zoom = zoom
             self.width = width
             super().__init__()
+
+
+    def _get_feature_segment(self, feature_width, segment_class=None, left_overflow=0, right_overflow=0, strand=0):
+        displayed_feature_width = feature_width - left_overflow - right_overflow
+        displayed_feature_string = "█" * displayed_feature_width
+
+        if left_overflow > 0:
+            displayed_feature_string = "░" + displayed_feature_string[1:]
+
+        if right_overflow > 0:
+            displayed_feature_string = displayed_feature_string[:-1] + "░"
+
+
+        if feature_width == 1:
+            if strand == 1:
+                displayed_feature_string = "▶"
+            elif strand == -1:
+                displayed_feature_string = "◀"
+            else:
+                displayed_feature_string = "●"
+
+        return Segment(displayed_feature_string, segment_class)
 
 
 
@@ -133,7 +155,6 @@ class FeatureViewer(ScrollView):
             (self.seq_features.vertical_group == y//3)
         ]
 
-
         if selected_seq_features.empty:
             return Strip.blank(self.size.width)
 
@@ -144,27 +165,34 @@ class FeatureViewer(ScrollView):
             
             for _, row in selected_seq_features.iterrows():
 
-
                 if row.screen_start < leftmost_position_cell:
-                    segments.append(
-                        Segment(" " * (row.screen_end - leftmost_position_cell), cds_style)
-                    )
+                    left_overflow = leftmost_position_cell - row.screen_start
+                    # TODO: fix the following
+                    right_overflow = 0
 
                 elif row.screen_end >= rightmost_position_cell:
                     segments.append(
                         Segment(" " * (row.screen_start - current_position))
                     )
-                    segments.append(
-                        Segment(" " * (row.screen_feature_width), cds_style)
-                    )
+                    left_overflow = 0
+                    right_overflow = row.screen_end - rightmost_position_cell
                     
                 else:
                     segments.append(
                         Segment(" " * (row.screen_start - current_position))
                     )
-                    segments.append(
-                        Segment(" " * row.screen_feature_width, cds_style)
+                    left_overflow = right_overflow = 0
+
+
+                segments.append(
+                    self._get_feature_segment(
+                        row.screen_feature_width, 
+                        cds_style, 
+                        left_overflow=left_overflow,
+                        right_overflow=right_overflow,
+                        strand=row.strand
                     )
+                )
                     
                 current_position = row.screen_end
 
@@ -322,15 +350,16 @@ def parse_genbank(genbank_path):
                     locus = record.id
                     start = feature.location.start
                     end = feature.location.end
+                    strand = feature.location.strand
                     locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
                     product = feature.qualifiers.get("product", ["no_product"])[0]
                     gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
                     
-                    rows.append([feature_type, locus, int(start), int(end), locus_tag, product, gene])
+                    rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene])
     
     genbank_features = pd.DataFrame(
         rows, 
-        columns=["feature_type", "locus", "start", "end", "locus_tag", "product", "gene"]
+        columns=["feature_type", "locus", "start", "end", "strand", "locus_tag", "product", "gene"]
     ).sort_values(["locus", "start"])
 
     return genbank_features, locus_sequences
@@ -349,7 +378,7 @@ class JinxApp(App):
         yield LocalViewport(
             seq_features=self.data, 
             genome_length=len(self.locus_sequences[self.current_locus]), 
-            nt_per_square=1
+            nt_per_square=64
         )
         yield Footer()
 

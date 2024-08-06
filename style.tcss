@@ -14,7 +14,7 @@ FeatureViewer .featurevier--label {
 }
 
 FeatureViewer .featurevier--cds {
-    background: red;
+    color: red;
 }
 
 
