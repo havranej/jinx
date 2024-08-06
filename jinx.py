@@ -1,8 +1,8 @@
 from textual.app import App, ComposeResult
 from textual.geometry import Size
 from textual.scrollbar import ScrollRight
-from textual.strip import Strip
 from textual.scroll_view import ScrollView
+from textual.strip import Strip
 from textual.widgets import Header, Footer, Static
 from textual.message import Message
 from textual.containers import Horizontal, Vertical
@@ -11,6 +11,11 @@ from textual.reactive import reactive
 from rich.segment import Segment
 
 import pandas as pd
+from Bio import SeqIO
+
+import sys
+
+import time
 
 
 class FeatureViewer(ScrollView):
@@ -50,6 +55,7 @@ class FeatureViewer(ScrollView):
         """
         self._compute_screen_positions()
         self._assign_vertical_groups()
+
         self.seq_features_interval_index = pd.IntervalIndex.from_arrays(
             self.seq_features.screen_start, 
             self.seq_features.screen_end,
@@ -72,17 +78,23 @@ class FeatureViewer(ScrollView):
         self.seq_features["screen_render_end"] = self.seq_features.screen_start  + self.seq_features.screen_render_width
 
     def _assign_vertical_groups(self):
-        vertical_groups = [-1] * len(self.seq_features)
+        vertical_groups = pd.Series(
+            [-1] * len(self.seq_features),
+            index=self.seq_features.index
+        )
 
+        outer_start_time = time.time()
         for group in range(len(self.seq_features)):
             current_max = -1
-            for i, (_, row) in enumerate(self.seq_features.iterrows()):
-                if vertical_groups[i] == -1 and row.screen_start > current_max:
+            for i, row in self.seq_features[vertical_groups == -1].iterrows():
+                if row.screen_start > current_max:
                     vertical_groups[i] = group
                     current_max = row.screen_render_end
 
-            if current_max == 0:
+            if current_max == -1:
                 break
+
+        print("--- Positions computed in %s seconds ---" % (time.time() - outer_start_time))
         
         self.seq_features["vertical_group"] = vertical_groups
 
@@ -239,7 +251,7 @@ class ZoomDetailsBar(Static):
         viewport_width = width * zoom
 
 
-        self.query_one("#left").update(f"[b]⊕[/b] 1:{zoom} \n|")
+        self.query_one("#left").update(f"[b]±[/b] 1:{zoom} \n|")
         self.query_one("#right").update(f"[b]↔[/b] {viewport_width} nt\n|")
 
 
@@ -293,12 +305,52 @@ DATA = pd.DataFrame([
 ])
 
 
-class GeneBankerApp(App):
+def parse_genbank(genbank_path):
+    """
+    Load a genbank file into a more convenient DataFrame
+    """
+    rows = []
+    locus_sequences = {}
+
+    # Iterate through genbank CDS records and convert them to a more convenient data frame
+    with open(genbank_path) as handle:
+        for record in SeqIO.parse(handle, "genbank"):
+            locus_sequences[record.id] = record.seq
+
+            for feature in record.features:
+                    feature_type = feature.type
+                    locus = record.id
+                    start = feature.location.start
+                    end = feature.location.end
+                    locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
+                    product = feature.qualifiers.get("product", ["no_product"])[0]
+                    gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
+                    
+                    rows.append([feature_type, locus, int(start), int(end), locus_tag, product, gene])
+    
+    genbank_features = pd.DataFrame(
+        rows, 
+        columns=["feature_type", "locus", "start", "end", "locus_tag", "product", "gene"]
+    ).sort_values(["locus", "start"])
+
+    return genbank_features, locus_sequences
+
+
+class JinxApp(App):
     CSS_PATH = "style.tcss"
+
+    data, locus_sequences = parse_genbank(sys.argv[1])
+    data["label"] = data.gene
+    current_locus = list(locus_sequences.keys())[0]
+
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield LocalViewport(seq_features=DATA, genome_length=900, nt_per_square=1)
+        yield LocalViewport(
+            seq_features=self.data, 
+            genome_length=len(self.locus_sequences[self.current_locus]), 
+            nt_per_square=1
+        )
         yield Footer()
 
     
@@ -306,6 +358,6 @@ class GeneBankerApp(App):
 
 if __name__ == "__main__":
 
-    app = GeneBankerApp()
+    app = JinxApp()
     app.run()
 
