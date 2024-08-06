@@ -6,6 +6,7 @@ from textual.scroll_view import ScrollView
 from textual.widgets import Header, Footer, Static
 from textual.message import Message
 from textual.containers import Horizontal, Vertical
+from textual.reactive import reactive
 
 from rich.segment import Segment
 
@@ -17,15 +18,36 @@ class FeatureViewer(ScrollView):
         "featurevier--label",
         "featurevier--cds",
     }
+    
+    nt_per_square = reactive(1)
 
     def __init__(self, seq_features, genome_length, nt_per_square=1) -> None:
         super().__init__()
-        self.show_vertical = True
 
         self.genome_length = genome_length
-        self.nt_per_square = nt_per_square
-
         self.seq_features = seq_features.sort_values("start")
+        self.nt_per_square = nt_per_square # This automatically triggers _initialize_fature_rendering
+
+
+    def validate_nt_per_square(self, nt_per_square):
+        if nt_per_square < 1:
+            nt_per_square = 1
+        elif nt_per_square > 2**20:
+            nt_per_square = 2**20
+        
+        return nt_per_square
+
+
+    def watch_nt_per_square(self, new_value):
+        # Is called when "nt_per_square" changes
+        self._initialize_fature_rendering()
+
+
+    def _initialize_fature_rendering(self):
+        """
+        Precompute how the features should be rendered.
+        We need to call this whenever a zoom level changes
+        """
         self._compute_screen_positions()
         self._assign_vertical_groups()
         self.seq_features_interval_index = pd.IntervalIndex.from_arrays(
@@ -35,13 +57,14 @@ class FeatureViewer(ScrollView):
         )
 
         self.n_virtual_groups = self.seq_features["vertical_group"].max()+1
-
         self.virtual_size = Size(self.genome_length//self.nt_per_square+1, self.n_virtual_groups*3)
+
+
 
     def _compute_screen_positions(self):
         # Convert from 1-based to 0-based coords
-        self.seq_features["screen_start"] = (self.seq_features.start - 1) // self.nt_per_square 
-        self.seq_features["screen_end"] = (self.seq_features.end - 1) // self.nt_per_square  + 1 # We add one, because the end is not inclusive
+        self.seq_features["screen_start"] = (self.seq_features.start - 1) // int(self.nt_per_square) 
+        self.seq_features["screen_end"] = (self.seq_features.end - 1) // int(self.nt_per_square)  + 1 # We add one, because the end is not inclusive
         self.seq_features["screen_feature_width"] = self.seq_features.screen_end - self.seq_features.screen_start
         self.seq_features.loc[self.seq_features.screen_feature_width < 1, "screen_feature_width"] = 1 # Minimal width is always 1
         self.seq_features["label_width"] = self.seq_features.label.str.len()
@@ -184,8 +207,6 @@ class FeatureViewer(ScrollView):
             return Strip.blank(self.size.width)
 
 
-
-
 class PositionBar(Static):
 
     def compose(self):
@@ -206,7 +227,29 @@ class PositionBar(Static):
         self.query_one("#right").update(f"{rightmost_position_nt} \n|")
 
 
+class ZoomDetailsBar(Static):
+
+    def compose(self):
+        with Horizontal():
+            yield Static(id="left")
+            yield Static(id="right")
+
+    def render_view_info(self, zoom, width):
+
+        viewport_width = width * zoom
+
+
+        self.query_one("#left").update(f"[b]⊕[/b] 1:{zoom} \n|")
+        self.query_one("#right").update(f"[b]↔[/b] {viewport_width} nt\n|")
+
+
 class LocalViewport(Static):
+
+
+    BINDINGS = [
+        ("+", "zoom_in", "Zoom in"),
+        ("-", "zoom_out", "Zoom out"),
+    ]
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -215,9 +258,19 @@ class LocalViewport(Static):
     def compose(self):
         yield PositionBar()
         yield FeatureViewer(**self.feature_viewer_kwargs)
+        yield ZoomDetailsBar()
 
     def on_feature_viewer_scrolled(self, event):
         self.query_one(PositionBar).render_view_info(event.position, event.zoom, event.width)
+        self.query_one(ZoomDetailsBar).render_view_info(event.zoom, event.width)
+
+    def action_zoom_in(self):
+        viewport = self.query_one(FeatureViewer)
+        viewport.nt_per_square = viewport.nt_per_square // 2
+    
+    def action_zoom_out(self):
+        viewport = self.query_one(FeatureViewer)
+        viewport.nt_per_square = viewport.nt_per_square * 2
         
 
 
@@ -247,6 +300,8 @@ class GeneBankerApp(App):
         yield Header()
         yield LocalViewport(seq_features=DATA, genome_length=900, nt_per_square=1)
         yield Footer()
+
+    
 
 
 if __name__ == "__main__":

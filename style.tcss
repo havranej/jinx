@@ -43,3 +43,24 @@ PositionBar {
         width: 1fr;
     }
 }    
+
+ZoomDetailsBar {
+    height: 1;
+    background: $panel;
+    color: $accent;
+    margin-right: 2;
+    dock: bottom;
+
+    #left{
+        text-align: left;
+        width: 1fr;
+    }
+    #middle{
+        text-align: center;
+        width: 1fr;
+    }
+    #right{
+        text-align: right;
+        width: 1fr;
+    }
+}    
