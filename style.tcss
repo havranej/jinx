@@ -9,8 +9,7 @@ FeatureViewer {
 }
 
 FeatureViewer .featurevier--label {
-    color: $secondary-darken-1;
-    text-opacity: 50%;
+    color: $secondary-darken-3;
 }
 
 FeatureViewer .featurevier--cds {
@@ -19,7 +18,7 @@ FeatureViewer .featurevier--cds {
 
 
 LocalViewport {
-    height: 60%;
+    height: 100%;
     border: solid green;
 }
 

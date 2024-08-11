@@ -9,6 +9,7 @@ from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 
 from rich.segment import Segment
+from rich.style import Style
 
 import pandas as pd
 from Bio import SeqIO
@@ -120,7 +121,6 @@ class FeatureViewer(ScrollView):
         if right_overflow > 0:
             displayed_feature_string = displayed_feature_string[:-1] + "░"
 
-
         if feature_width == 1:
             if strand == 1:
                 displayed_feature_string = "▶"
@@ -129,8 +129,40 @@ class FeatureViewer(ScrollView):
             else:
                 displayed_feature_string = "●"
 
-        return Segment(displayed_feature_string, segment_class)
+        negative_style = Style.chain(segment_class, Style(reverse=True, bold=True, bgcolor="yellow"))
 
+        if displayed_feature_width > 1:
+            if strand == 1:
+                if right_overflow > 0:
+                    segments = [
+                        Segment(displayed_feature_string[:-2], segment_class),
+                        Segment("→", negative_style),
+                        Segment(displayed_feature_string[-1], segment_class),
+                    ]
+                else:
+                    segments = [
+                        Segment(displayed_feature_string[:-1], segment_class),
+                        Segment("→", negative_style),
+                    ]
+
+            elif strand == -1:
+                if left_overflow > 1:
+                    segments = [
+                        Segment(displayed_feature_string[0], segment_class),
+                        Segment("←", negative_style),
+                        Segment(displayed_feature_string[2:], segment_class),
+                    ]
+                else:
+                    segments = [
+                        Segment("←", negative_style),
+                        Segment(displayed_feature_string[1:], segment_class),
+                    ]
+            else:
+                segments = [Segment(displayed_feature_string, segment_class)]
+        else:
+            segments = [Segment(displayed_feature_string, segment_class)]
+
+        return segments
 
 
     def render_line(self, y: int) -> Strip:
@@ -167,8 +199,7 @@ class FeatureViewer(ScrollView):
 
                 if row.screen_start < leftmost_position_cell:
                     left_overflow = leftmost_position_cell - row.screen_start
-                    # TODO: fix the following
-                    right_overflow = 0
+                    right_overflow = max(row.screen_end - rightmost_position_cell, 0)
 
                 elif row.screen_end >= rightmost_position_cell:
                     segments.append(
@@ -184,7 +215,7 @@ class FeatureViewer(ScrollView):
                     left_overflow = right_overflow = 0
 
 
-                segments.append(
+                segments.extend(
                     self._get_feature_segment(
                         row.screen_feature_width, 
                         cds_style, 
@@ -217,6 +248,7 @@ class FeatureViewer(ScrollView):
                         segments.append(
                             Segment(" " * (row.screen_end - leftmost_position_cell))
                         )
+                        print(row)
 
                 elif (row.screen_start + row.label_width) > rightmost_position_cell:
                     if row.label_width < (rightmost_position_cell - row.screen_start):
@@ -236,7 +268,7 @@ class FeatureViewer(ScrollView):
                     )
                     
 
-                current_position = max(row.screen_start, current_position) + row.label_width
+                current_position = max(row.screen_start, current_position) + len(segments[-1].text)
 
 
             strip = Strip(segments)
