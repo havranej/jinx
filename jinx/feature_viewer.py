@@ -1,28 +1,21 @@
-from textual.app import App, ComposeResult
 from textual.geometry import Size
-from textual.scrollbar import ScrollRight
 from textual.scroll_view import ScrollView
 from textual.strip import Strip
-from textual.widgets import Header, Footer, Static
 from textual.message import Message
-from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 
 from rich.segment import Segment
 from rich.style import Style
 
 import pandas as pd
-from Bio import SeqIO
-
-import sys
-
 import time
-
 
 class FeatureViewer(ScrollView):
     COMPONENT_CLASSES = {
         "featurevier--label",
-        "featurevier--cds",
+        "featurevier--default-feature",
+        "featurevier--type-cds",
+        "featurevier--type-gene",
     }
     
     nt_per_square = reactive(1)
@@ -112,6 +105,13 @@ class FeatureViewer(ScrollView):
 
 
     def _get_feature_segment(self, feature_width, segment_class=None, left_overflow=0, right_overflow=0, strand=0):
+        try:
+            rich_style = self.get_component_rich_style(f"featurevier--{segment_class}")
+        except KeyError:
+            # Given class is not defined
+            rich_style = self.get_component_rich_style("featurevier--default-feature")
+
+
         displayed_feature_width = feature_width - left_overflow - right_overflow
         displayed_feature_string = "█" * displayed_feature_width
 
@@ -129,38 +129,38 @@ class FeatureViewer(ScrollView):
             else:
                 displayed_feature_string = "●"
 
-        negative_style = Style.chain(segment_class, Style(reverse=True, bold=True, bgcolor="yellow"))
+        negative_style = Style.chain(rich_style, Style(reverse=True, bold=True, bgcolor="yellow"))
 
         if displayed_feature_width > 1:
             if strand == 1:
                 if right_overflow > 0:
                     segments = [
-                        Segment(displayed_feature_string[:-2], segment_class),
+                        Segment(displayed_feature_string[:-2], rich_style),
                         Segment("→", negative_style),
-                        Segment(displayed_feature_string[-1], segment_class),
+                        Segment(displayed_feature_string[-1], rich_style),
                     ]
                 else:
                     segments = [
-                        Segment(displayed_feature_string[:-1], segment_class),
+                        Segment(displayed_feature_string[:-1], rich_style),
                         Segment("→", negative_style),
                     ]
 
             elif strand == -1:
-                if left_overflow > 1:
+                if left_overflow > 0:
                     segments = [
-                        Segment(displayed_feature_string[0], segment_class),
+                        Segment(displayed_feature_string[0], rich_style),
                         Segment("←", negative_style),
-                        Segment(displayed_feature_string[2:], segment_class),
+                        Segment(displayed_feature_string[2:], rich_style),
                     ]
                 else:
                     segments = [
                         Segment("←", negative_style),
-                        Segment(displayed_feature_string[1:], segment_class),
+                        Segment(displayed_feature_string[1:], rich_style),
                     ]
             else:
-                segments = [Segment(displayed_feature_string, segment_class)]
+                segments = [Segment(displayed_feature_string, rich_style)]
         else:
-            segments = [Segment(displayed_feature_string, segment_class)]
+            segments = [Segment(displayed_feature_string, rich_style)]
 
         return segments
 
@@ -180,7 +180,6 @@ class FeatureViewer(ScrollView):
 
 
         label_style = self.get_component_rich_style("featurevier--label")
-        cds_style = self.get_component_rich_style("featurevier--cds")
 
         selected_seq_features = self.seq_features[
             self.seq_features_interval_index.overlaps(pd.Interval(leftmost_position_cell, rightmost_position_cell, closed='left')) &
@@ -218,7 +217,7 @@ class FeatureViewer(ScrollView):
                 segments.extend(
                     self._get_feature_segment(
                         row.screen_feature_width, 
-                        cds_style, 
+                        f"type-{row.feature_type.lower()}", 
                         left_overflow=left_overflow,
                         right_overflow=right_overflow,
                         strand=row.strand
@@ -248,7 +247,6 @@ class FeatureViewer(ScrollView):
                         segments.append(
                             Segment(" " * (row.screen_end - leftmost_position_cell))
                         )
-                        print(row)
 
                 elif (row.screen_start + row.label_width) > rightmost_position_cell:
                     if row.label_width < (rightmost_position_cell - row.screen_start):
@@ -258,6 +256,12 @@ class FeatureViewer(ScrollView):
                         segments.append(
                             Segment(row.label, label_style)
                         )
+                    else:
+                        # We add an empty segment so that the list doesn't stay
+                        # empty for the computation of the next position
+                        segments.append(
+                            Segment("", label_style)
+                        )
                     
                 else:
                     segments.append(
@@ -266,7 +270,6 @@ class FeatureViewer(ScrollView):
                     segments.append(
                         Segment(row.label, label_style)
                     )
-                    
 
                 current_position = max(row.screen_start, current_position) + len(segments[-1].text)
 
@@ -277,148 +280,3 @@ class FeatureViewer(ScrollView):
             
         else:
             return Strip.blank(self.size.width)
-
-
-class PositionBar(Static):
-
-    def compose(self):
-        with Horizontal():
-            yield Static(id="left")
-            yield Static(id="middle")
-            yield Static(id="right")
-
-    def render_view_info(self, position, zoom, width):
-
-        leftmost_position_nt = position.x * zoom + 1
-        middle_position_nt = (position.x + width//2) * zoom 
-        rightmost_position_nt = (position.x + width) * zoom
-
-
-        self.query_one("#left").update(f"{leftmost_position_nt} \n|")
-        self.query_one("#middle").update(f"{middle_position_nt} \n|")
-        self.query_one("#right").update(f"{rightmost_position_nt} \n|")
-
-
-class ZoomDetailsBar(Static):
-
-    def compose(self):
-        with Horizontal():
-            yield Static(id="left")
-            yield Static(id="right")
-
-    def render_view_info(self, zoom, width):
-
-        viewport_width = width * zoom
-
-
-        self.query_one("#left").update(f"[b]±[/b] 1:{zoom} \n|")
-        self.query_one("#right").update(f"[b]↔[/b] {viewport_width} nt\n|")
-
-
-class LocalViewport(Static):
-
-
-    BINDINGS = [
-        ("+", "zoom_in", "Zoom in"),
-        ("-", "zoom_out", "Zoom out"),
-    ]
-
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.feature_viewer_kwargs = kwargs
-
-    def compose(self):
-        yield PositionBar()
-        yield FeatureViewer(**self.feature_viewer_kwargs)
-        yield ZoomDetailsBar()
-
-    def on_feature_viewer_scrolled(self, event):
-        self.query_one(PositionBar).render_view_info(event.position, event.zoom, event.width)
-        self.query_one(ZoomDetailsBar).render_view_info(event.zoom, event.width)
-
-    def action_zoom_in(self):
-        viewport = self.query_one(FeatureViewer)
-        viewport.nt_per_square = viewport.nt_per_square // 2
-    
-    def action_zoom_out(self):
-        viewport = self.query_one(FeatureViewer)
-        viewport.nt_per_square = viewport.nt_per_square * 2
-        
-
-
-
-# DATA = pd.DataFrame([
-#     {"start": 2, "end": 13, "label": "Test 1"},
-#     {"start": 15, "end": 50, "label": "Test 2"},
-# ])
-DATA = pd.DataFrame([
-    {"start": 1, "end": 111, "label": "Width"},
-    {"start": 20, "end": 144, "label": "Test 1"},
-    {"start": 180, "end": 500, "label": "Test 2"},
-    {"start": 192, "end": 501, "label": "Test 2.1"},
-    {"start": 40, "end": 800, "label": "Test 3"},
-    {"start": 80, "end": 800, "label": "Test 4"},
-    {"start": 20, "end": 30, "label": "Test 5"},
-    {"start": 50, "end": 60, "label": "Test 6"},
-    {"start": 40, "end": 80, "label": "Test 7"},
-    {"start": 80, "end": 90, "label": "Test 8"},
-])
-
-
-def parse_genbank(genbank_path):
-    """
-    Load a genbank file into a more convenient DataFrame
-    """
-    rows = []
-    locus_sequences = {}
-
-    # Iterate through genbank CDS records and convert them to a more convenient data frame
-    with open(genbank_path) as handle:
-        for record in SeqIO.parse(handle, "genbank"):
-            locus_sequences[record.id] = record.seq
-
-            for feature in record.features:
-                    feature_type = feature.type
-                    locus = record.id
-                    start = feature.location.start
-                    end = feature.location.end
-                    strand = feature.location.strand
-                    locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
-                    product = feature.qualifiers.get("product", ["no_product"])[0]
-                    gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
-                    
-                    rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene])
-    
-    genbank_features = pd.DataFrame(
-        rows, 
-        columns=["feature_type", "locus", "start", "end", "strand", "locus_tag", "product", "gene"]
-    ).sort_values(["locus", "start"])
-
-    return genbank_features, locus_sequences
-
-
-class JinxApp(App):
-    CSS_PATH = "style.tcss"
-
-    data, locus_sequences = parse_genbank(sys.argv[1])
-    data["label"] = data.gene
-    current_locus = list(locus_sequences.keys())[0]
-
-
-    def compose(self) -> ComposeResult:
-        yield Header()
-        yield LocalViewport(
-            seq_features=self.data, 
-            genome_length=len(self.locus_sequences[self.current_locus]), 
-            nt_per_square=64
-        )
-        yield Footer()
-
-    
-
-
-if __name__ == "__main__":
-
-    app = JinxApp()
-    app.run()
-

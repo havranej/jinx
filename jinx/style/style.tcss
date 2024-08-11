@@ -1,9 +1,7 @@
 
-
 FeatureViewer {
     width: 100%;
     background: $surface;
-    padding-top: 1;
     overflow-y: scroll;
     scrollbar-size-vertical: 2
 }
@@ -12,14 +10,19 @@ FeatureViewer .featurevier--label {
     color: $secondary-darken-3;
 }
 
-FeatureViewer .featurevier--cds {
+FeatureViewer .featurevier--default-feature {
+    color: grey;
+}
+FeatureViewer .featurevier--type-cds {
     color: red;
 }
-
+FeatureViewer .featurevier--type-gene {
+    color: blue;
+}
 
 LocalViewport {
     height: 100%;
-    border: solid green;
+    border: round green;
 }
 
 
