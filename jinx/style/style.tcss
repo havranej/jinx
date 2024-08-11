@@ -19,6 +19,18 @@ FeatureViewer .featurevier--type-cds {
 FeatureViewer .featurevier--type-gene {
     color: blue;
 }
+FeatureViewer .featurevier--type-mRNA {
+    color: orange;
+}
+FeatureViewer .featurevier--type-regulatory {
+    color: purple;
+}
+FeatureViewer .featurevier--type-sig_peptide {
+    color: green;
+}
+FeatureViewer .featurevier--type-variation {
+    color: yellow;
+}
 
 LocalViewport {
     height: 100%;

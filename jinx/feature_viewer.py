@@ -10,12 +10,17 @@ from rich.style import Style
 import pandas as pd
 import time
 
+
 class FeatureViewer(ScrollView):
     COMPONENT_CLASSES = {
         "featurevier--label",
         "featurevier--default-feature",
         "featurevier--type-cds",
         "featurevier--type-gene",
+        "featurevier--type-mRNA",
+        "featurevier--type-sig_peptide",
+        "featurevier--type-regulatory",
+        "featurevier--type-variation",
     }
     
     nt_per_square = reactive(1)
