@@ -1,7 +1,10 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
+from textual.screen import Screen
+
 
 from widgets import LocalViewport
+from data_viewer import DataViewer, VisibleFeaturesTab
 from parsers import parse_genbank
 
 
@@ -22,10 +25,7 @@ DATA = pd.DataFrame([
 ])
 
 
-
-
-class JinxApp(App):
-    CSS_PATH = "style/style.tcss"
+class ViewerScreen(Screen):
 
     data, locus_sequences = parse_genbank(sys.argv[1])
     data["label"] = data.gene
@@ -39,7 +39,26 @@ class JinxApp(App):
             genome_length=len(self.locus_sequences[self.current_locus]), 
             nt_per_square=64
         )
+        yield DataViewer(
+            seq_features=self.data
+        )
         yield Footer()
+
+    def on_feature_viewer_visible_features_changed(self, event):
+        self.query_one(VisibleFeaturesTab).display_visible_features(event.visible_features)
+    
+
+
+
+class JinxApp(App):
+    CSS_PATH = "style/style.tcss"
+    BINDINGS = [
+        ("q", "quit()", "Quit")
+    ]
+    
+    def on_mount(self) -> None:
+        self.install_screen(ViewerScreen(), name="viewer")
+        self.push_screen('viewer')
 
 
 if __name__ == "__main__":

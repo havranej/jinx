@@ -109,6 +109,12 @@ class FeatureViewer(ScrollView):
             super().__init__()
 
 
+    class VisibleFeaturesChanged(Message):
+        def __init__(self, visible_features):
+            self.visible_features = visible_features
+            super().__init__()
+
+
     def _get_feature_segment(self, feature_width, segment_class=None, left_overflow=0, right_overflow=0, strand=0):
         try:
             rich_style = self.get_component_rich_style(f"featurevier--{segment_class}")
@@ -180,16 +186,19 @@ class FeatureViewer(ScrollView):
         # First non-displayed cell; we need to substract the scrollbar width
         rightmost_position_cell = leftmost_position_cell + self.size.width - self.styles.scrollbar_size_vertical 
 
-        if y == 0:
-            self.post_message(self.Scrolled(self.scroll_offset, self.nt_per_square, self.size.width - self.styles.scrollbar_size_vertical ))
-
-
         label_style = self.get_component_rich_style("featurevier--label")
 
-        selected_seq_features = self.seq_features[
-            self.seq_features_interval_index.overlaps(pd.Interval(leftmost_position_cell, rightmost_position_cell, closed='left')) &
-            (self.seq_features.vertical_group == y//3)
+        features_within_bounds = self.seq_features[
+            self.seq_features_interval_index.overlaps(pd.Interval(leftmost_position_cell, rightmost_position_cell, closed='left'))
         ]
+
+        selected_seq_features = features_within_bounds[
+            (features_within_bounds.vertical_group == y//3)
+        ]
+
+        if y == 0:
+            self.post_message(self.Scrolled(self.scroll_offset, self.nt_per_square, self.size.width - self.styles.scrollbar_size_vertical ))
+            self.post_message(self.VisibleFeaturesChanged(features_within_bounds))
 
         if selected_seq_features.empty:
             return Strip.blank(self.size.width)

@@ -13,7 +13,6 @@ class PositionBar(Static):
             yield Static(id="right")
 
     def render_view_info(self, position, zoom, width):
-        print(position.x)
 
         leftmost_position_nt = position.x * zoom + 1
         middle_position_nt = (position.x + width//2) * zoom 

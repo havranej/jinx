@@ -22,12 +22,21 @@ def parse_genbank(genbank_path):
                     locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
                     product = feature.qualifiers.get("product", ["no_product"])[0]
                     gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
+
+                    qualifiers_list = []
+                    for k, value_list in feature.qualifiers.items():
+                         for v in value_list:
+                              qualifiers_list.append((k,v))
+
+                    qualifiers = "\n".join([f"{k}={v}" for k, v in qualifiers_list])
+                    formatted_qualifiers = "\n\n".join([f"**{k}**: {v}" for k, v in qualifiers_list])
                     
-                    rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene])
+                    rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene, qualifiers, formatted_qualifiers])
     
     genbank_features = pd.DataFrame(
         rows, 
-        columns=["feature_type", "locus", "start", "end", "strand", "locus_tag", "product", "gene"]
+        columns=["feature_type", "locus", "start", "end", "strand", "locus_tag", "product", "gene", "qualifiers", "formatted_qualifiers"]
     ).sort_values(["locus", "start"])
+
 
     return genbank_features, locus_sequences

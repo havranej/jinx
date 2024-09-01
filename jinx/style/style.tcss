@@ -33,10 +33,13 @@ FeatureViewer .featurevier--type-variation {
 }
 
 LocalViewport {
-    height: 100%;
-    border: round green;
+    height: 6fr;
+    border: round gray;
 }
 
+LocalViewport:focus-within {
+    border: round green;
+}
 
 PositionBar {
     height: 2;
@@ -78,3 +81,16 @@ ZoomDetailsBar {
         width: 1fr;
     }
 }    
+
+DataViewer{
+    height: 4fr;
+}
+
+.visible-features-data-table {
+    width: 2fr;
+    height: 100%;
+}
+
+.visible-features-details {
+    width: 1fr;
+}
