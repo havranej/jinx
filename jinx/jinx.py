@@ -1,12 +1,14 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer
+from textual.widgets import Header, Footer, Input
 from textual.screen import Screen
 
 
 from widgets import LocalViewport
-from data_viewer import DataViewer, VisibleFeaturesTab
+from feature_viewer import FeatureViewer
+from data_viewer import DataViewer, VisibleFeaturesTab, TextSearch
 from parsers import parse_genbank
 
+from textual._animator import AnimationError
 
 import pandas as pd
 import sys
@@ -27,10 +29,11 @@ DATA = pd.DataFrame([
 
 class ViewerScreen(Screen):
 
-    data, locus_sequences = parse_genbank(sys.argv[1])
-    data["label"] = data.gene
-    current_locus = list(locus_sequences.keys())[0]
-
+    def __init__(self, data, locus_sequences, current_locus):
+        self.data = data
+        self.locus_sequences = locus_sequences
+        self.current_locus = current_locus
+        super().__init__()
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -47,18 +50,38 @@ class ViewerScreen(Screen):
     def on_feature_viewer_visible_features_changed(self, event):
         self.query_one(VisibleFeaturesTab).display_visible_features(event.visible_features)
     
-
+    def on_text_search_search_result_selected(self, event):
+        # TODO: Make feature viewer go to location
+        self.query_one(FeatureViewer).go_to_location(
+            # Need an explicit conversion to int, because otherwise the animation breaks
+            int(event.feature.start),  
+            where="middle"
+        )
 
 
 class JinxApp(App):
     CSS_PATH = "style/style.tcss"
     BINDINGS = [
-        ("q", "quit()", "Quit")
+        ("/", "open_search()", "Search"),
+        ("q", "quit()", "Quit"),
     ]
+
+
+    data, locus_sequences = parse_genbank(sys.argv[1])
+    data["label"] = data.gene
+    # TODO: Display according to current locus + inter-locus switching
+    current_locus = list(locus_sequences.keys())[0]
+
     
     def on_mount(self) -> None:
-        self.install_screen(ViewerScreen(), name="viewer")
+        self.install_screen(ViewerScreen(self.data, self.locus_sequences, self.current_locus), name="viewer")
         self.push_screen('viewer')
+
+    def action_open_search(self):
+        self.query_one("#data-viewer-tabs").active = "text-search"
+        self.set_focus(
+            self.query_one("#text-search-input")
+        )
 
 
 if __name__ == "__main__":

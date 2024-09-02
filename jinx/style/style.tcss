@@ -84,6 +84,11 @@ ZoomDetailsBar {
 
 DataViewer{
     height: 4fr;
+    border: round gray;
+}
+
+DataViewer:focus-within {
+    border: round green;
 }
 
 .visible-features-data-table {

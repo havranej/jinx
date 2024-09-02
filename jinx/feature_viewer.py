@@ -294,3 +294,19 @@ class FeatureViewer(ScrollView):
             
         else:
             return Strip.blank(self.size.width)
+
+
+    def go_to_location(self, location_nt, where="left"):
+        location_cell = (location_nt-1) // self.nt_per_square
+
+        if where == "left":
+            self.scroll_to(
+                x=location_cell,
+                animate=False
+            )
+        elif where == "middle":
+            self.scroll_to(
+                x=location_cell-self.size.width // 2,
+                animate=False
+            )
+            
