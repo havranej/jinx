@@ -1,5 +1,5 @@
 
-from textual.widgets import Static, TabbedContent, Markdown, DataTable, Input, ListView, ListItem, Label, TabPane
+from textual.widgets import Static, TabbedContent, Markdown, DataTable, Input, ListView, ListItem, Label, TabPane, ContentSwitcher
 from textual.containers import Horizontal, VerticalScroll
 from textual.message import Message
 
@@ -36,10 +36,13 @@ class VisibleFeaturesTab(Horizontal):
         
         
 class TextSearch(Static):
+    BINDINGS = [
+        ("escape", "exit_search()", "Exit search"),
+    ]
 
-    def __init__(self, seq_features):
+    def __init__(self, seq_features, **kwargs):
         self.seq_features = seq_features
-        super().__init__()
+        super().__init__(**kwargs)
 
     def compose(self):
         yield Input(id="text-search-input")
@@ -68,12 +71,15 @@ class TextSearch(Static):
             results
         )
 
-        
-
     class SearchResultSelected(Message):
         def __init__(self, feature):
             self.feature = feature
             super().__init__()
+    
+    class ExitSearch(Message):
+        def __init__(self):
+            super().__init__()
+
 
     def on_list_view_highlighted(self, event):
         if event.item is not None and event.item.name is not None:
@@ -85,6 +91,8 @@ class TextSearch(Static):
                 )
             )
 
+    def action_exit_search(self):
+        self.post_message(self.ExitSearch())
 
 
         
@@ -95,9 +103,15 @@ class DataViewer(Static):
         self.border_title = "Visible features"
 
     def compose(self):
-        with TabbedContent(id="data-viewer-tabs"):
-            with TabPane("Visible features", id="visible-features"):
-                yield VisibleFeaturesTab()
-            with TabPane("Search", id="text-search"):
-                yield TextSearch(self.seq_features)
+        with ContentSwitcher(id="data-viewer-tabs", initial="visible-features"):
+            yield VisibleFeaturesTab(id="visible-features")
+            yield TextSearch(self.seq_features, id="text-search")
+
+    def on_text_search_exit_search(self):
+        self.query_one("#text-search-input").clear()
+        self.query_one(ContentSwitcher).current = "visible-features"
+        self.border_title = "Visible features"
+        self.app.set_focus(
+            self.query_one(".visible-features-data-table")
+        )
         

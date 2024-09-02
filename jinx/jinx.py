@@ -78,7 +78,8 @@ class JinxApp(App):
         self.push_screen('viewer')
 
     def action_open_search(self):
-        self.query_one("#data-viewer-tabs").active = "text-search"
+        self.query_one("#data-viewer-tabs").current = "text-search"
+        self.query_one(DataViewer).border_title = "Search..."
         self.set_focus(
             self.query_one("#text-search-input")
         )

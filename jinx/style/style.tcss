@@ -85,6 +85,7 @@ ZoomDetailsBar {
 DataViewer{
     height: 4fr;
     border: round gray;
+    padding-top: 1;
 }
 
 DataViewer:focus-within {
