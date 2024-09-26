@@ -34,12 +34,16 @@ FeatureViewer .featurevier--type-variation {
 
 LocalViewport {
     height: 6fr;
+}
+
+.focus-highlight-border {
     border: round gray;
 }
 
-LocalViewport:focus-within {
+.focus-highlight-border:focus-within {
     border: round green;
 }
+
 
 PositionBar {
     height: 2;
@@ -84,19 +88,40 @@ ZoomDetailsBar {
 
 DataViewer{
     height: 4fr;
-    border: round gray;
     padding-top: 1;
-}
-
-DataViewer:focus-within {
-    border: round green;
+    padding-left: 1;
 }
 
 .visible-features-data-table {
-    width: 2fr;
+    width: 1fr;
     height: 100%;
 }
 
 .visible-features-details {
     width: 1fr;
+}
+
+.visible-features-data-table:focus-within{
+    background: $panel;
+}
+
+FeatureQualifiers VerticalScroll:focus-within{
+    background: $panel;
+}
+
+TextSearch Input{
+    margin: 0 1 1 1;
+    border: none;
+    padding: 0 1;
+    height: 1;
+    background: $panel;
+}
+
+TextSearch Input:focus{
+    background: $secondary-background;
+}
+
+.text-search-placeholder {
+    text-align: center;
+    color: $error;
 }

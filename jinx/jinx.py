@@ -1,14 +1,12 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Input
+from textual.widgets import Header, Footer
 from textual.screen import Screen
 
 
-from widgets import LocalViewport
+from local_viewport import LocalViewport
 from feature_viewer import FeatureViewer
-from data_viewer import DataViewer, VisibleFeaturesTab, TextSearch
+from data_viewer import DataViewer
 from parsers import parse_genbank
-
-from textual._animator import AnimationError
 
 import pandas as pd
 import sys
@@ -29,29 +27,26 @@ DATA = pd.DataFrame([
 
 class ViewerScreen(Screen):
 
-    def __init__(self, data, locus_sequences, current_locus):
-        self.data = data
-        self.locus_sequences = locus_sequences
-        self.current_locus = current_locus
+    def __init__(self):
         super().__init__()
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield LocalViewport(
-            seq_features=self.data, 
-            genome_length=len(self.locus_sequences[self.current_locus]), 
-            nt_per_square=64
+            seq_features=self.app.get_current_locus_data(),
+            genome_length=self.app.get_current_locus_length(), 
+            nt_per_square=64,
         )
-        yield DataViewer(
-            seq_features=self.data
-        )
+        yield DataViewer()
         yield Footer()
 
+    def on_mount(self):
+        self.query_one(LocalViewport).border_title = self.app.current_locus
+
     def on_feature_viewer_visible_features_changed(self, event):
-        self.query_one(VisibleFeaturesTab).display_visible_features(event.visible_features)
+        self.query_one("#visible-features").display_features(event.visible_features)
     
     def on_text_search_search_result_selected(self, event):
-        # TODO: Make feature viewer go to location
         self.query_one(FeatureViewer).go_to_location(
             # Need an explicit conversion to int, because otherwise the animation breaks
             int(event.feature.start),  
@@ -62,31 +57,54 @@ class ViewerScreen(Screen):
 class JinxApp(App):
     CSS_PATH = "style/style.tcss"
     BINDINGS = [
-        ("/", "open_search()", "Search"),
+        ("/", "open_search()", "Search qualifiers"),
+        ("l", "open_locus_selector()", "Loci"),
         ("q", "quit()", "Quit"),
     ]
 
 
-    data, locus_sequences = parse_genbank(sys.argv[1])
-    data["label"] = data.gene
-    # TODO: Display according to current locus + inter-locus switching
-    current_locus = list(locus_sequences.keys())[0]
+    # data, locus_sequences = parse_genbank(sys.argv[1])
+    # data["label"] = data.gene
+    # # TODO: Display according to current locus + inter-locus switching
+    # current_locus = list(locus_sequences.keys())[0]
 
+    def __init__(self, path):
+        super().__init__()
+        self.load_data(path)
+
+    def load_data(self, path):
+        feature_data, locus_data = parse_genbank(path)
+        feature_data["label"] = feature_data["product"]
+
+        self.feature_data = feature_data.groupby("locus")
+        self.locus_data = locus_data
+        self.current_locus = self.locus_data.index[0]
+
+    def get_current_locus_data(self):
+        return self.feature_data.get_group(self.current_locus)
+    
+    def get_current_locus_length(self):
+        print( self.locus_data.loc[self.current_locus, "sequence_length"] )
+        return int(self.locus_data.loc[self.current_locus, "sequence_length"])
+    
     
     def on_mount(self) -> None:
-        self.install_screen(ViewerScreen(self.data, self.locus_sequences, self.current_locus), name="viewer")
+        self.install_screen(ViewerScreen(), name="viewer")
         self.push_screen('viewer')
 
     def action_open_search(self):
         self.query_one("#data-viewer-tabs").current = "text-search"
-        self.query_one(DataViewer).border_title = "Search..."
+        self.query_one(DataViewer).border_title = "Search qualifiers"
         self.set_focus(
             self.query_one("#text-search-input")
         )
 
+    def action_open_locus_selector(self):
+        self.query_one(DataViewer).show_locus_switcher()
+
 
 if __name__ == "__main__":
 
-    app = JinxApp()
+    app = JinxApp(sys.argv[1])
     app.run()
 

@@ -55,6 +55,8 @@ class LocalViewport(Static):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.add_class("focus-highlight-border")
+
         self.feature_viewer_kwargs = kwargs
 
     def compose(self):

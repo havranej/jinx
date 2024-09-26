@@ -27,7 +27,7 @@ class FeatureViewer(ScrollView):
 
     def __init__(self, seq_features, genome_length, nt_per_square=1) -> None:
         super().__init__()
-
+        
         self.genome_length = genome_length
         self.seq_features = seq_features.sort_values("start")
         self.nt_per_square = nt_per_square # This automatically triggers _initialize_fature_rendering
