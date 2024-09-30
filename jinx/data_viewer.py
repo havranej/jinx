@@ -1,5 +1,5 @@
 
-from textual.widgets import Static, TabbedContent, Markdown, DataTable, Input, ListView, ListItem, Label, TabPane, ContentSwitcher, Placeholder
+from textual.widgets import Static, Markdown, DataTable, Input, ContentSwitcher
 from textual.containers import Horizontal, VerticalScroll
 from textual.message import Message
 
@@ -10,8 +10,8 @@ class FeatureQualifiers(Horizontal):
 
     def compose(self):
         yield Horizontal(
-            DataTable(cursor_type="row", classes="visible-features-data-table"),
-            VerticalScroll(Markdown("I am a Markdown", classes="visible-features-details"))
+            DataTable(cursor_type="row", classes="visible-features-data-table focus-highlight-background"),
+            VerticalScroll(Markdown("I am a Markdown", classes="visible-features-details"), classes="focus-highlight-background")
         ) 
 
     def on_mount(self) -> None:
@@ -36,16 +36,17 @@ class FeatureQualifiers(Horizontal):
         
 
 class LocusSwitcher(Static):
-    # TODO
-
     DISPLAYED_COLUMNS = ["locus_id", "name", "sequence_length"]
+    BINDINGS = [
+        ("escape", "exit_switcher()", "Exit locus switcher"),
+    ]
 
     current_features = None
 
     def compose(self):
         yield Horizontal(
-            DataTable(cursor_type="row", classes="visible-features-data-table"),
-            VerticalScroll(Markdown("I am a Markdown", classes="visible-features-details"))
+            DataTable(cursor_type="row", classes="visible-features-data-table focus-highlight-background"),
+            VerticalScroll(Markdown("I am a Markdown", classes="visible-features-details"), classes="focus-highlight-background")
         )
 
     def on_mount(self) -> None:
@@ -68,6 +69,21 @@ class LocusSwitcher(Static):
             "_" + self.current_features.description.iloc[event.cursor_row] + "_\n\n" +
             self.current_features.formatted_annotations.iloc[event.cursor_row]
         )
+
+    class ChangeCurrentLocus(Message):
+        def __init__(self, locus_index):
+            self.locus_index = locus_index
+            super().__init__()
+
+    def on_data_table_row_selected(self, event):       
+        self.post_message(self.ChangeCurrentLocus(event.cursor_row))
+
+    class Exit(Message):
+        def __init__(self):
+            super().__init__()
+
+    def action_exit_switcher(self):
+        self.post_message(self.Exit())
         
 
 
@@ -148,6 +164,13 @@ class DataViewer(Static):
 
     def on_text_search_exit_search(self):
         self.query_one("#text-search-input").clear()
+        self.query_one("#data-viewer-tabs").current = "visible-features"
+        self.border_title = "Visible features"
+        self.app.set_focus(
+            self.query_one("#visible-features  .visible-features-data-table")
+        )
+
+    def on_locus_switcher_exit(self):
         self.query_one("#data-viewer-tabs").current = "visible-features"
         self.border_title = "Visible features"
         self.app.set_focus(

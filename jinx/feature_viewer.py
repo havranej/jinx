@@ -47,6 +47,21 @@ class FeatureViewer(ScrollView):
         self._initialize_fature_rendering()
 
 
+    def change_visible_features(self, seq_features=None, genome_length=None, nt_per_square=None):
+        if genome_length is not None:
+            self.genome_length = genome_length
+        
+        if seq_features is not None:
+            self.seq_features = seq_features.sort_values("start")
+        
+        if nt_per_square is not None:
+            self.nt_per_square = nt_per_square
+        else:
+            # Since nt_per_square is watched, its change automatically triggers the rendering
+            # If we don't change it, we need to trigger it manually
+            self._initialize_fature_rendering()
+
+
     def _initialize_fature_rendering(self):
         """
         Precompute how the features should be rendered.

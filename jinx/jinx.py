@@ -92,6 +92,19 @@ class JinxApp(App):
         self.install_screen(ViewerScreen(), name="viewer")
         self.push_screen('viewer')
 
+
+    def on_locus_switcher_change_current_locus(self, event):
+        self.current_locus = self.locus_data.index[event.locus_index]
+        print(self.current_locus)
+
+        self.query_one(FeatureViewer).change_visible_features(
+            genome_length=self.get_current_locus_length(),
+            seq_features=self.get_current_locus_data()
+        )
+
+        self.query_one(LocalViewport).border_title = self.app.current_locus
+
+
     def action_open_search(self):
         self.query_one("#data-viewer-tabs").current = "text-search"
         self.query_one(DataViewer).border_title = "Search qualifiers"

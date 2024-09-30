@@ -101,11 +101,7 @@ DataViewer{
     width: 1fr;
 }
 
-.visible-features-data-table:focus-within{
-    background: $panel;
-}
-
-FeatureQualifiers VerticalScroll:focus-within{
+.focus-highlight-background:focus-within{
     background: $panel;
 }
 
