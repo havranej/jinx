@@ -1,15 +1,13 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Input, Markdown
-from textual.containers import Vertical
-from textual.screen import Screen, ModalScreen
+from textual.widgets import Header, Footer
+from textual.screen import Screen
 
 from local_viewport import LocalViewport
 from feature_viewer import FeatureViewer
 from data_viewer import DataViewer
+from goto_position import GotoPositionScreen
 from parsers import parse_genbank
 
-
-from collections import namedtuple
 
 import pandas as pd
 import sys
@@ -56,41 +54,6 @@ class ViewerScreen(Screen):
             where="middle"
         )
 
-GotoResult = namedtuple(
-    "GotoResult", 
-    "locus start end center nt_per_square",
-    defaults=(None, None, None, None, None)
-)
-
-class GotoPositionScreen(ModalScreen):
-    BINDINGS = [
-        ("escape", "close_screen()", "Exit goto"),
-    ]
-    
-    def __init__(self):
-        super().__init__()
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="goto-container"):
-            yield Input(id="goto-input")
-            yield Markdown(id="goto-markdown")
-
-    def action_close_screen(self):
-        self.dismiss(GotoResult())
-
-    def on_input_submitted(self):
-        self.dismiss(GotoResult(self.query_one("#goto-input").value))
-
-    def on_input_changed(self, event):
-        query_value = event.value
-        preview = self.query_one("#goto-markdown")
-
-        if query_value.isnumeric():
-            preview.update(event.value)
-        else:
-             preview.update("Invalid query")
-
-
 class JinxApp(App):
     CSS_PATH = "style/style.tcss"
     BINDINGS = [
@@ -124,6 +87,7 @@ class JinxApp(App):
         self.install_screen(ViewerScreen(), name="viewer")
         self.install_screen(GotoPositionScreen(), name="goto")
         self.push_screen('viewer')
+        self.push_screen('goto')
 
 
     def on_locus_switcher_change_current_locus(self, event):
@@ -148,8 +112,13 @@ class JinxApp(App):
     def action_open_locus_selector(self):
         self.query_one(DataViewer).show_locus_switcher()
 
-    def evaluate_goto(self, goto_result):
-        print(goto_result)
+    def evaluate_goto(self, goto_result: int):
+        # The result should be validated by the GoTo input itself
+        if goto_result is None:
+            return
+
+        feature_viewer = self.query_one(FeatureViewer)
+        feature_viewer.scroll_to((goto_result-1) // feature_viewer.nt_per_square, duration=0.5)
         
     def action_open_goto(self):
         self.push_screen('goto', self.evaluate_goto)

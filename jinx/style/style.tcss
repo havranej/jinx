@@ -126,11 +126,11 @@ GotoPositionScreen {
     align: center middle;
 }
 
-#goto-container {
-    width: 100;
-    height: 20;
+#goto-container{
+    width: 80;
+    height: 8;
+}
 
-    padding: 0 1;
-    border: thick $background 80%;
-    background: $surface;
+#goto-message{
+    margin: 1 3
 }
