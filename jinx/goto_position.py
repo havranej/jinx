@@ -14,7 +14,7 @@ class GotoValidator(Validator):
         try:
             coord = int(value)
         except ValueError:
-            return self.failure("Not a valid integer")
+            return self.failure("Not a valid position")
 
         if self.is_in_range(coord):
             return self.success()
@@ -39,7 +39,7 @@ class GotoPositionScreen(ModalScreen):
             yield Input(
                 id="goto-input", 
                 placeholder="Go to position",
-                valid_empty=True,
+                valid_empty=False,
                 validators=GotoValidator(app=self.app)
             )
             yield Label("Welcome to [red]goto[/red]", id="goto-message")
@@ -58,6 +58,11 @@ class GotoPositionScreen(ModalScreen):
 
     def on_input_submitted(self):
         if self.is_valid:
-            self.dismiss(int(self.query_one("#goto-input").value))
+            submitted_value = int(self.query_one("#goto-input").value)
+            self.dismiss(submitted_value)
+
         else:
             self.dismiss(None)
+
+    def on_screen_suspend(self):
+        self.query_one(Input).clear()

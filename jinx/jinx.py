@@ -8,22 +8,7 @@ from data_viewer import DataViewer
 from goto_position import GotoPositionScreen
 from parsers import parse_genbank
 
-
-import pandas as pd
 import sys
-
-DATA = pd.DataFrame([
-    {"start": 1, "end": 111, "label": "Width"},
-    {"start": 20, "end": 144, "label": "Test 1"},
-    {"start": 180, "end": 500, "label": "Test 2"},
-    {"start": 192, "end": 501, "label": "Test 2.1"},
-    {"start": 40, "end": 800, "label": "Test 3"},
-    {"start": 80, "end": 800, "label": "Test 4"},
-    {"start": 20, "end": 30, "label": "Test 5"},
-    {"start": 50, "end": 60, "label": "Test 6"},
-    {"start": 40, "end": 80, "label": "Test 7"},
-    {"start": 80, "end": 90, "label": "Test 8"},
-])
 
 
 class ViewerScreen(Screen):
