@@ -42,6 +42,8 @@ class ZoomDetailsBar(Static):
 
 class LocalViewport(Static):
 
+    ALLOW_MAXIMIZE = True
+
     BINDINGS = [
         Binding("+", "zoom_in", "Zoom in"),
         Binding("-", "zoom_out", "Zoom out"),
@@ -58,7 +60,7 @@ class LocalViewport(Static):
         self.add_class("focus-highlight-border")
 
         self.feature_viewer_kwargs = kwargs
-
+        
     def compose(self):
         yield PositionBar()
         yield FeatureViewer(**self.feature_viewer_kwargs)

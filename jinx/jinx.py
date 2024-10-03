@@ -40,8 +40,11 @@ class ViewerScreen(Screen):
         )
 
 class JinxApp(App):
+    TITLE = "Jinx"
     CSS_PATH = "style/style.tcss"
     BINDINGS = [
+        ("v", "focus_viewer()", "Focus on viewer"),
+        ("V", "maximize_viewer()", "Maximize viewer"),
         ("l", "open_locus_selector()", "Loci"),
         ("/", "open_search()", "Search qualifiers"),
         (":", "open_goto()", "Go to position"),
@@ -72,7 +75,6 @@ class JinxApp(App):
         self.install_screen(ViewerScreen(), name="viewer")
         self.install_screen(GotoPositionScreen(), name="goto")
         self.push_screen('viewer')
-        self.push_screen('goto')
 
 
     def on_locus_switcher_change_current_locus(self, event):
@@ -108,7 +110,17 @@ class JinxApp(App):
     def action_open_goto(self):
         self.push_screen('goto', self.evaluate_goto)
 
+    def action_focus_viewer(self):
+        self.set_focus(
+            self.query_one(FeatureViewer)
+        )
 
+    def action_maximize_viewer(self):
+        viewport = self.query_one(LocalViewport)
+        if viewport.is_maximized:
+            self.query_one(ViewerScreen).minimize()
+        else:
+            self.query_one(ViewerScreen).maximize(viewport)
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class GotoPositionScreen(ModalScreen):
                 valid_empty=False,
                 validators=GotoValidator(app=self.app)
             )
-            yield Label("Welcome to [red]goto[/red]", id="goto-message")
+            yield Label("[blue]Enter a coordinate", id="goto-message")
 
     def action_close_screen(self):
         self.dismiss(None)
