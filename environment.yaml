@@ -1,0 +1,7 @@
+name: jinx
+channels:
+  - conda-forge
+dependencies:
+  - textual=0.83.0
+  - pandas=2.2.3
+  - biopython=1.84
