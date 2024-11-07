@@ -8,6 +8,8 @@ from local_viewport import LocalViewport
 from feature_viewer import FeatureViewer
 from data_viewer import DataViewer
 from goto_position import GotoPositionScreen
+from help_screen import HelpScreen
+
 from parsers import parse_genbank
 
 import sys
@@ -50,6 +52,7 @@ class JinxApp(App):
         ("l", "open_locus_selector()", "Loci"),
         ("/", "open_search()", "Search qualifiers"),
         (":", "open_goto()", "Go to position"),
+        ("?", "open_help()", "Help"),
         ("q", "quit()", "Quit"),
     ]
 
@@ -76,6 +79,7 @@ class JinxApp(App):
     def on_mount(self) -> None:
         self.install_screen(ViewerScreen(), name="viewer")
         self.install_screen(GotoPositionScreen(), name="goto")
+        self.install_screen(HelpScreen(), name="help")
         self.push_screen('viewer')
 
 
@@ -111,6 +115,9 @@ class JinxApp(App):
         
     def action_open_goto(self):
         self.push_screen('goto', self.evaluate_goto)
+
+    def action_open_help(self):
+        self.push_screen('help')
 
     def action_focus_viewer(self):
         self.set_focus(
