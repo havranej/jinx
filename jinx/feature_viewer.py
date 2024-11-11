@@ -211,7 +211,7 @@ class FeatureViewer(ScrollView):
             (features_within_bounds.vertical_group == y//3)
         ]
 
-        if y == 0:
+        if y == scroll_y:
             self.post_message(self.Scrolled(self.scroll_offset, self.nt_per_square, self.size.width - self.styles.scrollbar_size_vertical ))
             self.post_message(self.VisibleFeaturesChanged(features_within_bounds))
 
