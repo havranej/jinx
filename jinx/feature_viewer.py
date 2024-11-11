@@ -9,6 +9,7 @@ from rich.style import Style
 
 import pandas as pd
 import time
+import textwrap
 
 
 class FeatureViewer(ScrollView):
@@ -285,8 +286,11 @@ class FeatureViewer(ScrollView):
                             Segment(row.label, label_style)
                         )
                     else:
+
+                        
                         segments.append(
-                            Segment(" " * (row.screen_end - leftmost_position_cell))
+                            # Segment(" " * (row.screen_end - leftmost_position_cell))
+                            Segment(row.label[:row.screen_end-leftmost_position_cell-1]+"…")
                         )
 
                 elif (row.screen_start + row.label_width) > rightmost_position_cell:
@@ -301,7 +305,11 @@ class FeatureViewer(ScrollView):
                         # We add an empty segment so that the list doesn't stay
                         # empty for the computation of the next position
                         segments.append(
-                            Segment("", label_style)
+                            Segment(" " * (row.screen_start - current_position))
+                        )
+                        segments.append(
+                            Segment(row.label[:rightmost_position_cell - row.screen_start - 1]+"…")
+                            # Segment("", label_style)
                         )
                     
                 else:
