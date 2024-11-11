@@ -7,14 +7,14 @@ FeatureViewer {
 }
 
 FeatureViewer .featurevier--label {
-    color: $secondary-darken-3;
+    color: grey;
 }
 
 FeatureViewer .featurevier--default-feature {
     color: grey;
 }
 FeatureViewer .featurevier--type-cds {
-    color: red;
+    color: green;
 }
 FeatureViewer .featurevier--type-gene {
     color: blue;
@@ -26,7 +26,7 @@ FeatureViewer .featurevier--type-regulatory {
     color: purple;
 }
 FeatureViewer .featurevier--type-sig_peptide {
-    color: green;
+    color: red;
 }
 FeatureViewer .featurevier--type-variation {
     color: yellow;

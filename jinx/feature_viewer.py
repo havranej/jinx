@@ -137,15 +137,27 @@ class FeatureViewer(ScrollView):
             # Given class is not defined
             rich_style = self.get_component_rich_style("featurevier--default-feature")
 
+        """
+        Arrow reference
+            ═══▶
+            ━━━▶
+            ───▶
+
+            ┅━━▶
+            ━━▶┅
+            ╍━━▶
+            ╍══▶
+            
+        """
 
         displayed_feature_width = feature_width - left_overflow - right_overflow
-        displayed_feature_string = "█" * displayed_feature_width
+        displayed_feature_string = "━" * displayed_feature_width
 
         if left_overflow > 0:
-            displayed_feature_string = "░" + displayed_feature_string[1:]
+            displayed_feature_string = "┅" + displayed_feature_string[1:]
 
         if right_overflow > 0:
-            displayed_feature_string = displayed_feature_string[:-1] + "░"
+            displayed_feature_string = displayed_feature_string[:-1] + "┅"
 
         if feature_width == 1:
             if strand == 1:
@@ -162,25 +174,25 @@ class FeatureViewer(ScrollView):
                 if right_overflow > 0:
                     segments = [
                         Segment(displayed_feature_string[:-2], rich_style),
-                        Segment("→", negative_style),
+                        Segment("▶", rich_style),
                         Segment(displayed_feature_string[-1], rich_style),
                     ]
                 else:
                     segments = [
                         Segment(displayed_feature_string[:-1], rich_style),
-                        Segment("→", negative_style),
+                        Segment("▶", rich_style),
                     ]
 
             elif strand == -1:
                 if left_overflow > 0:
                     segments = [
                         Segment(displayed_feature_string[0], rich_style),
-                        Segment("←", negative_style),
+                        Segment("◀", rich_style),
                         Segment(displayed_feature_string[2:], rich_style),
                     ]
                 else:
                     segments = [
-                        Segment("←", negative_style),
+                        Segment("◀", rich_style),
                         Segment(displayed_feature_string[1:], rich_style),
                     ]
             else:
