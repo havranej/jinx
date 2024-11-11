@@ -138,19 +138,6 @@ class FeatureViewer(ScrollView):
             # Given class is not defined
             rich_style = self.get_component_rich_style("featurevier--default-feature")
 
-        """
-        Arrow reference
-            ═══▶
-            ━━━▶
-            ───▶
-
-            ┅━━▶
-            ━━▶┅
-            ╍━━▶
-            ╍══▶
-            
-        """
-
         displayed_feature_width = feature_width - left_overflow - right_overflow
         displayed_feature_string = "━" * displayed_feature_width
 
@@ -290,7 +277,7 @@ class FeatureViewer(ScrollView):
                         
                         segments.append(
                             # Segment(" " * (row.screen_end - leftmost_position_cell))
-                            Segment(row.label[:row.screen_end-leftmost_position_cell-1]+"…")
+                            Segment(row.label[:row.screen_end-leftmost_position_cell-1]+"…", label_style)
                         )
 
                 elif (row.screen_start + row.label_width) > rightmost_position_cell:
@@ -308,7 +295,7 @@ class FeatureViewer(ScrollView):
                             Segment(" " * (row.screen_start - current_position))
                         )
                         segments.append(
-                            Segment(row.label[:rightmost_position_cell - row.screen_start - 1]+"…")
+                            Segment(row.label[:rightmost_position_cell - row.screen_start - 1]+"…", label_style)
                             # Segment("", label_style)
                         )
                     
