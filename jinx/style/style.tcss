@@ -7,7 +7,7 @@ FeatureViewer {
 }
 
 FeatureViewer .featurevier--label {
-    color: grey;
+    color: white 20%;
 }
 
 FeatureViewer .featurevier--default-feature {
@@ -19,8 +19,17 @@ FeatureViewer .featurevier--type-cds {
 FeatureViewer .featurevier--type-gene {
     color: blue;
 }
-FeatureViewer .featurevier--type-mRNA {
+FeatureViewer .featurevier--type-mrna {
     color: orange;
+}
+FeatureViewer .featurevier--type-rrna {
+    color: cyan;
+}
+FeatureViewer .featurevier--type-trna {
+    color: magenta;
+}
+FeatureViewer .featurevier--type-rep_origin {
+    color: pink;
 }
 FeatureViewer .featurevier--type-regulatory {
     color: purple;
