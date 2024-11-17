@@ -7,26 +7,35 @@ FeatureViewer {
 }
 
 FeatureViewer .featurevier--label {
-    color: $secondary-darken-3;
+    color: white 20%;
 }
 
 FeatureViewer .featurevier--default-feature {
     color: grey;
 }
 FeatureViewer .featurevier--type-cds {
-    color: red;
+    color: green;
 }
 FeatureViewer .featurevier--type-gene {
     color: blue;
 }
-FeatureViewer .featurevier--type-mRNA {
+FeatureViewer .featurevier--type-mrna {
     color: orange;
+}
+FeatureViewer .featurevier--type-rrna {
+    color: cyan;
+}
+FeatureViewer .featurevier--type-trna {
+    color: magenta;
+}
+FeatureViewer .featurevier--type-rep_origin {
+    color: pink;
 }
 FeatureViewer .featurevier--type-regulatory {
     color: purple;
 }
 FeatureViewer .featurevier--type-sig_peptide {
-    color: green;
+    color: red;
 }
 FeatureViewer .featurevier--type-variation {
     color: yellow;
@@ -92,6 +101,7 @@ DataViewer{
     padding-left: 1;
 }
 
+
 .visible-features-data-table {
     width: 1fr;
     height: 100%;
@@ -115,6 +125,16 @@ TextSearch Input{
 
 TextSearch Input:focus{
     background: $secondary-background;
+}
+
+# For some reason Textual cannot account for the fact that the 
+# table is 2 rows lower in the search (because of the search bar)
+# We need to account for it with the margin-bottom so that the
+# content doesn't get get out of view
+
+TextSearch .visible-features-data-table{
+    height: 100%;
+    margin-bottom: 2;
 }
 
 .text-search-placeholder {

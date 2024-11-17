@@ -60,9 +60,17 @@ class JinxApp(App):
         super().__init__()
         self.load_data(path)
 
+    def determine_labels(self, feature_data):
+        current_labels = feature_data.label.copy()
+        current_labels.loc[current_labels == "no_label"] = feature_data.gene.loc[current_labels == "no_label"]
+        current_labels.loc[current_labels == "no_gene_name"] = feature_data["product"].loc[current_labels == "no_gene_name"]
+        current_labels.loc[current_labels == "no_product"] = feature_data.locus_tag.loc[current_labels == "no_product"]
+        current_labels.loc[current_labels == "no_tag"] = feature_data.feature_type.loc[current_labels == "no_tag"] + " <no label>"
+        return current_labels
+
     def load_data(self, path):
         feature_data, locus_data = parse_genbank(path)
-        feature_data["label"] = feature_data["product"]
+        feature_data["label"] = self.determine_labels(feature_data)
 
         self.feature_data = feature_data.groupby("locus")
         self.locus_data = locus_data
