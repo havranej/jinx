@@ -101,6 +101,7 @@ DataViewer{
     padding-left: 1;
 }
 
+
 .visible-features-data-table {
     width: 1fr;
     height: 100%;
@@ -124,6 +125,16 @@ TextSearch Input{
 
 TextSearch Input:focus{
     background: $secondary-background;
+}
+
+# For some reason Textual cannot account for the fact that the 
+# table is 2 rows lower in the search (because of the search bar)
+# We need to account for it with the margin-bottom so that the
+# content doesn't get get out of view
+
+TextSearch .visible-features-data-table{
+    height: 100%;
+    margin-bottom: 2;
 }
 
 .text-search-placeholder {
