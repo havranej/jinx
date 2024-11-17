@@ -224,27 +224,48 @@ class FeatureViewer(ScrollView):
         )
 
         # List of first available position in each row
-        y_maxima = [-1]
+        y_maxima = []
 
         for i, row in label_df.iterrows():
+            feature_width = row.x_coord + row.label_width + 1
+            if not y_maxima:
+                vertical_groups[i] = 0
+                y_maxima.append(feature_width)
+                continue
+
             # We look at the rows from the reverse order
             for y, maximum in enumerate(y_maxima[::-1]):
                 # And find one that we cannot place our label in
                 # We terminate the search at the first failure, because we need to draw not only the label, but also the stem
                 if row.x_coord < maximum:
                     break
+            else:
+                y += 1
             
             vertical_groups[i] = len(y_maxima) - y
 
             if y == 0:
                 # If we failed at the bottommost row, we need to create a new row    
-                y_maxima.append(row.x_coord + row.label_width)
+                y_maxima.append(feature_width)
             else:
                 # Otherwise we just update the fist available position in the row that the label fits
-                y_maxima[-(y)] = row.x_coord + row.label_width
+                y_maxima[-(y)] = feature_width
+
+            print(row.label)
+            print(y_maxima)
+            print(vertical_groups)
 
         label_df["vertical_group"] = vertical_groups
+        print(label_df)
         return label_df
+    
+    def _safely_postprocess_label_list(self, label_list):
+        if label_list:
+            labels_df = self._assign_vertical_label_groups(pd.DataFrame(label_list).sort_values("x_coord"))
+        else:
+            # No sroting can be done
+            labels_df = self._assign_vertical_label_groups(pd.DataFrame([]))
+        return labels_df
     
     
     def _compute_current_labels(self, left_screen_bound, right_screen_bound):
@@ -284,9 +305,9 @@ class FeatureViewer(ScrollView):
                         labels_above.append({"x_coord":x_coord_above, "label":feature.label, "label_width":feature.label_width})
                     else:
                         labels_below.append({"x_coord":x_coord_below, "label":feature.label, "label_width":feature.label_width})
-
-        labels_above_df = self._assign_vertical_label_groups(pd.DataFrame(labels_above))
-        labels_below_df = self._assign_vertical_label_groups(pd.DataFrame(labels_below))
+        
+        labels_above_df = self._safely_postprocess_label_list(labels_above)
+        labels_below_df = self._safely_postprocess_label_list(labels_below)
 
         return labels_above_df, labels_below_df
     
@@ -343,7 +364,7 @@ class FeatureViewer(ScrollView):
         current_position = leftmost_position_cell
         label_style = self.get_component_rich_style("featurevier--label")
 
-
+        # We make stems look like labels and mix them in with the other labels
         stems_df = pd.DataFrame({
             "x_coord": stems_to_render.x_coord,
             "label": "│",
