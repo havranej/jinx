@@ -7,9 +7,13 @@ from textual.reactive import reactive
 from rich.segment import Segment
 from rich.style import Style
 
+from collections import namedtuple
+
 import pandas as pd
 import time
 import math
+
+LabelTuple = namedtuple("LabelTuple", ["above", "below"])
 
 
 class FeatureViewer(ScrollView):
@@ -29,11 +33,11 @@ class FeatureViewer(ScrollView):
     }
     
     nt_per_square = reactive(1)
-    # features_within_bounds = reactive(pd.DataFrame())
 
-    def __init__(self, seq_features, genome_length, nt_per_square=1) -> None:
+    def __init__(self, seq_features, genome_length, nt_per_square=1, min_height=10) -> None:
         super().__init__()
 
+        self.min_height = min_height
         self.genome_length = genome_length
         self.seq_features = seq_features.sort_values(["start", "end", "feature_type"])
         self.nt_per_square = nt_per_square # This automatically triggers _initialize_fature_rendering
@@ -84,11 +88,11 @@ class FeatureViewer(ScrollView):
             closed="left"
         )
 
-        self.n_virtual_groups = self.seq_features["vertical_group"].max()+1
         # The virtual_size determines the scrollbar range
-        # TODO: Better determination of y axis virtual scale
-        self.virtual_size = Size(self.genome_length//self.nt_per_square+1, 50)
-
+        self.virtual_size = Size(self.genome_length//self.nt_per_square+1, max(self.min_height, self.size.height))
+    
+    def on_resize(self):
+        self._initialize_fature_rendering()
 
 
     def _compute_screen_positions(self):
@@ -223,17 +227,22 @@ class FeatureViewer(ScrollView):
             index=label_df.index
         )
 
+        # We are trying to center the features -> we have an equal number of rows above and below them
+        available_label_space = (self.virtual_size.height - self.features_within_bounds.vertical_group.max()) // 2 - 1
+
         # List of first available position in each row
         y_maxima = []
 
         for i, row in label_df.iterrows():
             feature_width = row.x_coord + row.label_width + 1
+
             if not y_maxima:
+                # The first label to be placed
                 vertical_groups[i] = 0
                 y_maxima.append(feature_width)
                 continue
 
-            # We look at the rows from the reverse order
+            # We look at the rows from the reverse order (from the features out)
             for y, maximum in enumerate(y_maxima[::-1]):
                 # And find one that we cannot place our label in
                 # We terminate the search at the first failure, because we need to draw not only the label, but also the stem
@@ -242,6 +251,10 @@ class FeatureViewer(ScrollView):
             else:
                 y += 1
             
+            if y == 0 and len(y_maxima) >= available_label_space:
+                # We run of available vertical space
+                continue
+
             vertical_groups[i] = len(y_maxima) - y
 
             if y == 0:
@@ -251,12 +264,7 @@ class FeatureViewer(ScrollView):
                 # Otherwise we just update the fist available position in the row that the label fits
                 y_maxima[-(y)] = feature_width
 
-            print(row.label)
-            print(y_maxima)
-            print(vertical_groups)
-
         label_df["vertical_group"] = vertical_groups
-        print(label_df)
         return label_df
     
     def _safely_postprocess_label_list(self, label_list):
@@ -265,6 +273,9 @@ class FeatureViewer(ScrollView):
         else:
             # No sroting can be done
             labels_df = self._assign_vertical_label_groups(pd.DataFrame([]))
+        
+        # Drop labels that couldn't fit vertically
+        labels_df = labels_df[labels_df.vertical_group != -1]
         return labels_df
     
     
@@ -290,6 +301,7 @@ class FeatureViewer(ScrollView):
             x_coord_above = self._find_free_x_coordinate(feature, features_above, left_screen_bound, right_screen_bound)
             x_coord_below = self._find_free_x_coordinate(feature, features_below, left_screen_bound, right_screen_bound)
 
+            # Decide if the label should go above or below
             if x_coord_above == -1:
                 if x_coord_below == -1:
                     # No position found
@@ -309,7 +321,7 @@ class FeatureViewer(ScrollView):
         labels_above_df = self._safely_postprocess_label_list(labels_above)
         labels_below_df = self._safely_postprocess_label_list(labels_below)
 
-        return labels_above_df, labels_below_df
+        return LabelTuple(labels_above_df, labels_below_df)
     
 
     def _render_feature_strip(self, features_to_render, leftmost_position_cell, rightmost_position_cell):
@@ -419,15 +431,21 @@ class FeatureViewer(ScrollView):
             self.post_message(self.Scrolled(self.scroll_offset, self.nt_per_square, self.size.width - self.styles.scrollbar_size_vertical ))
             self.post_message(self.VisibleFeaturesChanged(self.features_within_bounds))
 
-        # Adding constants to create spacing between features and labels
-        last_label_above_row = self.labels_within_bounds[0].vertical_group.max() + 1
+        # # Adding constants to create spacing between features and labels
+        # last_label_above_row = self.labels_within_bounds.above.vertical_group.max() + 1
+        # last_feature_row = self.features_within_bounds.vertical_group.max() + last_label_above_row + 1
+        # last_label_below_row = self.labels_within_bounds.below.vertical_group.max() + last_feature_row + 1
+
+        last_label_above_row = (self.virtual_size.height - self.features_within_bounds.vertical_group.max()) // 2 - 1
+        first_label_above_row = max(last_label_above_row - self.labels_within_bounds.above.vertical_group.max() - 1, 0)
+
         last_feature_row = self.features_within_bounds.vertical_group.max() + last_label_above_row + 1
-        last_label_below_row = self.labels_within_bounds[1].vertical_group.max() + last_feature_row + 1
+        last_label_below_row = self.labels_within_bounds.below.vertical_group.max() + last_feature_row + 1
 
         if y <= last_label_above_row:
             # We are rendering labels above
-            labels_to_render = self.labels_within_bounds[0][y == self.labels_within_bounds[0].vertical_group]
-            stems_to_render = self.labels_within_bounds[0][y > self.labels_within_bounds[0].vertical_group]
+            labels_to_render = self.labels_within_bounds.above[y == self.labels_within_bounds.above.vertical_group + first_label_above_row]
+            stems_to_render = self.labels_within_bounds.above[y > self.labels_within_bounds.above.vertical_group + first_label_above_row]
             strip = self._render_label_strip(labels_to_render, stems_to_render, leftmost_position_cell, rightmost_position_cell)
         
         elif y <= last_feature_row:
@@ -438,8 +456,8 @@ class FeatureViewer(ScrollView):
             strip = self._render_feature_strip(features_to_render, leftmost_position_cell, rightmost_position_cell)
         else:
             # We are rendering labels below
-            labels_to_render = self.labels_within_bounds[1][y == last_label_below_row - self.labels_within_bounds[1].vertical_group + 1]
-            stems_to_render = self.labels_within_bounds[1][y < (last_label_below_row - self.labels_within_bounds[1].vertical_group + 1)]
+            labels_to_render = self.labels_within_bounds.below[y == last_label_below_row - self.labels_within_bounds.below.vertical_group + 1]
+            stems_to_render = self.labels_within_bounds.below[y < (last_label_below_row - self.labels_within_bounds.below.vertical_group + 1)]
             strip = self._render_label_strip(labels_to_render, stems_to_render, leftmost_position_cell, rightmost_position_cell)
         
         return strip
