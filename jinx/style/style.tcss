@@ -95,6 +95,16 @@ ZoomDetailsBar {
     }
 }    
 
+#feature-details {
+    dock: right;
+    padding: 1;
+    display: none;
+    width: 30%;
+    height: 100%;
+    background: darkcyan;
+}
+
+
 DataViewer{
     height: 4fr;
     padding-top: 1;

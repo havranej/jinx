@@ -27,14 +27,14 @@ class ViewerScreen(Screen):
             genome_length=self.app.get_current_locus_length(), 
             nt_per_square=64,
         )
-        yield DataViewer()
+        # yield DataViewer()
         yield Footer()
 
     def on_mount(self):
         self.query_one(LocalViewport).border_title = self.app.current_locus
 
-    def on_feature_viewer_visible_features_changed(self, event):
-        self.query_one("#visible-features").display_features(event.visible_features)
+    # def on_feature_viewer_visible_features_changed(self, event):
+    #     self.query_one("#visible-features").display_features(event.visible_features)
     
     def on_text_search_search_result_selected(self, event):
         self.query_one(FeatureViewer).go_to_location(
@@ -53,7 +53,7 @@ class JinxApp(App):
         ("/", "open_search()", "Search qualifiers"),
         (":", "open_goto()", "Go to position"),
         ("?", "open_help()", "Help"),
-        ("q", "quit()", "Quit"),
+        # ("q", "quit()", "Quit"),
     ]
 
     def __init__(self, path):

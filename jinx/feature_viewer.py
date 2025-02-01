@@ -431,6 +431,9 @@ class FeatureViewer(ScrollView):
             self.post_message(self.Scrolled(self.scroll_offset, self.nt_per_square, self.size.width - self.styles.scrollbar_size_vertical ))
             self.post_message(self.VisibleFeaturesChanged(self.features_within_bounds))
 
+            print("CURRENT FEATURES")
+            print(self.features_within_bounds)
+
         # # Adding constants to create spacing between features and labels
         # last_label_above_row = self.labels_within_bounds.above.vertical_group.max() + 1
         # last_feature_row = self.features_within_bounds.vertical_group.max() + last_label_above_row + 1

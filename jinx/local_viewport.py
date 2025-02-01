@@ -1,8 +1,11 @@
 
 from textual.widgets import Static
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from feature_viewer import FeatureViewer
+
+from textual.reactive import reactive
+
 
 class PositionBar(Static):
 
@@ -53,18 +56,28 @@ class LocalViewport(Static):
         Binding("pageup", "fast_scroll_by(-100)", "Scroll left by 100 cells", show=False, priority=True),
         Binding("home", "fast_scroll_to('home')", "Scroll to beginning", show=False, priority=True),
         Binding("end", "fast_scroll_to('end')", "Scroll to end", show=False, priority=True),
+        Binding("n", "select_feature('next')", "Next feature", show=False, priority=True ),
+        Binding("p", "select_feature('previous')", "Previous feature", show=False, priority=True ),
+        Binding("q", "close_feature_details", "Close feature details", show=False, priority=True ),
+        Binding("escape", "close_feature_details", "Close feature details", show=False, priority=True ),
     ]
+
+    selected_feature = reactive(None)
 
     def __init__(self, **kwargs):
         super().__init__()
         self.add_class("focus-highlight-border")
-
         self.feature_viewer_kwargs = kwargs
         
+
     def compose(self):
-        yield PositionBar()
-        yield FeatureViewer(**self.feature_viewer_kwargs)
-        yield ZoomDetailsBar()
+        yield Vertical(
+            PositionBar(),
+            FeatureViewer(**self.feature_viewer_kwargs),
+            ZoomDetailsBar(),
+        )
+        yield Static("Sidebar", id="feature-details")
+
 
     def on_feature_viewer_scrolled(self, event):
         self.query_one(PositionBar).render_view_info(event.position, event.zoom, event.width)
@@ -106,4 +119,34 @@ class LocalViewport(Static):
 
 
 
+    def action_select_feature(self, direction):
+        visible_features = self.query_one(FeatureViewer).features_within_bounds
+
+        if direction=="next":
+            # Circle around
+            if self.selected_feature is None or self.selected_feature == len(visible_features) - 1:
+                self.selected_feature = 0
+            else:
+                self.selected_feature += 1
+
+        elif direction == "previous":
+            if self.selected_feature is None or self.selected_feature == 0:
+                self.selected_feature = len(visible_features) - 1
+            else:
+                self.selected_feature -= 1
+        
+
+    def action_close_feature_details(self):
+        self.selected_feature = None
     
+
+    def watch_selected_feature(self, old_feature, new_feature):
+        visible_features = self.query_one(FeatureViewer).features_within_bounds
+        details_sidebar = self.query_one("#feature-details")
+
+        if new_feature is None:
+            details_sidebar.styles.display = "none"
+
+        else:
+            details_sidebar.styles.display = "block"
+            details_sidebar.update(visible_features.formatted_qualifiers.iloc[self.selected_feature])
