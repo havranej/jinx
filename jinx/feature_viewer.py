@@ -153,7 +153,7 @@ class FeatureViewer(ScrollView):
             rich_style = self.get_component_rich_style("featurevier--default-feature")
 
         if highlighted:
-            rich_style = self.get_component_rich_style("featurevier--type-variation")
+            rich_style += Style(reverse=True)
 
         displayed_feature_width = feature_width - left_overflow - right_overflow
         displayed_feature_string = "━" * displayed_feature_width

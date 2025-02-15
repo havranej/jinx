@@ -7,7 +7,7 @@ FeatureViewer {
 }
 
 FeatureViewer .featurevier--label {
-    color: white 20%;
+    color: white 30%;
 }
 
 FeatureViewer .featurevier--default-feature {
