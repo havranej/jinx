@@ -62,8 +62,6 @@ class LocalViewport(Static):
         Binding("escape", "close_feature_details", "Close feature details", show=False, priority=True ),
     ]
 
-    selected_feature = reactive(None)
-
     def __init__(self, **kwargs):
         super().__init__()
         self.add_class("focus-highlight-border")
@@ -120,33 +118,29 @@ class LocalViewport(Static):
 
 
     def action_select_feature(self, direction):
-        visible_features = self.query_one(FeatureViewer).features_within_bounds
-
-        if direction=="next":
-            # Circle around
-            if self.selected_feature is None or self.selected_feature == len(visible_features) - 1:
-                self.selected_feature = 0
-            else:
-                self.selected_feature += 1
-
-        elif direction == "previous":
-            if self.selected_feature is None or self.selected_feature == 0:
-                self.selected_feature = len(visible_features) - 1
-            else:
-                self.selected_feature -= 1
-        
-
-    def action_close_feature_details(self):
-        self.selected_feature = None
-    
-
-    def watch_selected_feature(self, old_feature, new_feature):
-        visible_features = self.query_one(FeatureViewer).features_within_bounds
+        feature_viewer = self.query_one(FeatureViewer)
         details_sidebar = self.query_one("#feature-details")
 
-        if new_feature is None:
+        if feature_viewer.features_within_bounds.empty:
+            # TODO Add a message: no feature in the view
             details_sidebar.styles.display = "none"
+            return
 
-        else:
-            details_sidebar.styles.display = "block"
-            details_sidebar.update(visible_features.formatted_qualifiers.iloc[self.selected_feature])
+
+        details_sidebar.styles.display = "block"
+        
+        if direction=="next":
+            feature_viewer.select_next_feature()
+        elif direction == "previous":
+            feature_viewer.select_previous_feature()
+
+        details_sidebar.update(feature_viewer.seq_features.loc[feature_viewer.selected_feature].formatted_qualifiers)
+
+
+    def action_close_feature_details(self):
+        feature_viewer = self.query_one(FeatureViewer)
+        feature_viewer.unselect_feature()
+
+        details_sidebar = self.query_one("#feature-details")
+        details_sidebar.styles.display = "none"
+    

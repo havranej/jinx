@@ -33,6 +33,7 @@ class FeatureViewer(ScrollView):
     }
     
     nt_per_square = reactive(1)
+    selected_feature = reactive(None)
 
     def __init__(self, seq_features, genome_length, nt_per_square=1, min_height=10) -> None:
         super().__init__()
@@ -43,6 +44,7 @@ class FeatureViewer(ScrollView):
         self.nt_per_square = nt_per_square # This automatically triggers _initialize_fature_rendering
         self.features_within_bounds = pd.DataFrame()
         self.labels_within_bounds = pd.DataFrame()
+        
         
 
     def validate_nt_per_square(self, nt_per_square):
@@ -143,12 +145,15 @@ class FeatureViewer(ScrollView):
             super().__init__()
 
 
-    def _get_feature_segment(self, feature_width, segment_class=None, left_overflow=0, right_overflow=0, strand=0):
+    def _get_feature_segment(self, feature_width, segment_class=None, left_overflow=0, right_overflow=0, strand=0, highlighted=False):
         try:
             rich_style = self.get_component_rich_style(f"featurevier--{segment_class}")
         except KeyError:
             # Given class is not defined
             rich_style = self.get_component_rich_style("featurevier--default-feature")
+
+        if highlighted:
+            rich_style = self.get_component_rich_style("featurevier--type-variation")
 
         displayed_feature_width = feature_width - left_overflow - right_overflow
         displayed_feature_string = "━" * displayed_feature_width
@@ -331,7 +336,7 @@ class FeatureViewer(ScrollView):
         segments = []
         current_position = leftmost_position_cell
         
-        for _, row in features_to_render.iterrows():
+        for idx, row in features_to_render.iterrows():
 
             if row.screen_start < leftmost_position_cell:
                 left_overflow = leftmost_position_cell - row.screen_start
@@ -357,7 +362,8 @@ class FeatureViewer(ScrollView):
                     f"type-{row.feature_type.lower()}", 
                     left_overflow=left_overflow,
                     right_overflow=right_overflow,
-                    strand=row.strand
+                    strand=row.strand,
+                    highlighted=(False if self.selected_feature is None else (idx==self.selected_feature))
                 )
             )
                 
@@ -434,11 +440,6 @@ class FeatureViewer(ScrollView):
             print("CURRENT FEATURES")
             print(self.features_within_bounds)
 
-        # # Adding constants to create spacing between features and labels
-        # last_label_above_row = self.labels_within_bounds.above.vertical_group.max() + 1
-        # last_feature_row = self.features_within_bounds.vertical_group.max() + last_label_above_row + 1
-        # last_label_below_row = self.labels_within_bounds.below.vertical_group.max() + last_feature_row + 1
-
         last_label_above_row = (self.virtual_size.height - self.features_within_bounds.vertical_group.max()) // 2 - 1
         first_label_above_row = max(last_label_above_row - self.labels_within_bounds.above.vertical_group.max() - 1, 0)
 
@@ -479,4 +480,38 @@ class FeatureViewer(ScrollView):
                 x=location_cell-self.size.width // 2,
                 animate=False
             )
-            
+    
+
+    def select_next_feature(self):
+        if self.selected_feature is None:
+            self.selected_feature = self.features_within_bounds.index[0]
+
+        else:
+            try:
+                integer_position = self.seq_features.index.get_loc(self.selected_feature)
+                self.selected_feature = self.seq_features.index[integer_position + 1]
+            except IndexError:
+                # We are at the last feature overall
+                self.selected_feature = self.features_within_bounds.index[0]
+            else:
+                if self.selected_feature not in self.features_within_bounds.index:
+                    self.selected_feature = self.features_within_bounds.index[0]
+
+    
+
+    def select_previous_feature(self):
+        if self.selected_feature is None:
+            self.selected_feature = self.features_within_bounds.index[-1]
+
+        else:
+            integer_position = self.seq_features.index.get_loc(self.selected_feature)
+            self.selected_feature = self.seq_features.index[integer_position - 1]
+
+            # We don't have to catch the IndexError, because of python's way of handling of negative numbers
+
+            if self.selected_feature not in self.features_within_bounds.index:
+                self.selected_feature = self.features_within_bounds.index[-1]
+
+
+    def unselect_feature(self):
+        self.selected_feature = None
