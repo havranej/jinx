@@ -125,31 +125,18 @@ DataViewer{
     background: $panel;
 }
 
-TextSearch Input{
-    margin: 0 1 1 1;
-    border: none;
-    padding: 0 1;
-    height: 1;
-    background: $panel;
-}
-
-TextSearch Input:focus{
-    background: $secondary-background;
-}
-
-# For some reason Textual cannot account for the fact that the 
-# table is 2 rows lower in the search (because of the search bar)
-# We need to account for it with the margin-bottom so that the
-# content doesn't get get out of view
-
-TextSearch .visible-features-data-table{
-    height: 100%;
-    margin-bottom: 2;
-}
-
 .text-search-placeholder {
     text-align: center;
     color: $error;
+}
+
+TextSearchScreen {
+    align: center middle;
+}
+
+#search-container{
+    width: 90%;
+    height: 90%;
 }
 
 GotoPositionScreen {

@@ -8,6 +8,7 @@ from local_viewport import LocalViewport
 from feature_viewer import FeatureViewer
 from data_viewer import DataViewer
 from goto_position import GotoPositionScreen
+from text_search import TextSearchScreen
 from help_screen import HelpScreen
 
 from parsers import parse_genbank
@@ -47,13 +48,10 @@ class JinxApp(App):
     TITLE = "Jinx"
     CSS_PATH = "style/style.tcss"
     BINDINGS = [
-        ("v", "focus_viewer()", "Focus on viewer"),
-        ("V", "maximize_viewer()", "Maximize viewer"),
         ("l", "open_locus_selector()", "Loci"),
         ("/", "open_search()", "Search qualifiers"),
         (":", "open_goto()", "Go to position"),
         ("?", "open_help()", "Help"),
-        # ("q", "quit()", "Quit"),
     ]
 
     def __init__(self, path):
@@ -87,6 +85,7 @@ class JinxApp(App):
     def on_mount(self) -> None:
         self.install_screen(ViewerScreen(), name="viewer")
         self.install_screen(GotoPositionScreen(), name="goto")
+        self.install_screen(TextSearchScreen(), name="text_search")
         self.install_screen(HelpScreen(), name="help")
         self.push_screen('viewer')
 
@@ -103,12 +102,20 @@ class JinxApp(App):
         self.query_one(LocalViewport).border_title = self.app.current_locus
 
 
-    def action_open_search(self):
-        self.query_one("#data-viewer-tabs").current = "text-search"
-        self.query_one(DataViewer).border_title = "Search qualifiers"
-        self.set_focus(
-            self.query_one("#text-search-input")
+    def evaluate_text_search(self, search_result):
+        if search_result is None:
+            return
+
+        feature_viewer = self.query_one(FeatureViewer)
+        # TODO: Make this better
+        feature_viewer.scroll_to(
+            int((search_result.start-1) // feature_viewer.nt_per_square), # Explicit conversion from np.int64
+            duration=0.5
         )
+        feature_viewer.selected_feature = search_result.name
+
+    def action_open_search(self):
+        self.push_screen('text_search', self.evaluate_text_search)
 
     def action_open_locus_selector(self):
         self.query_one(DataViewer).show_locus_switcher()
@@ -126,18 +133,6 @@ class JinxApp(App):
 
     def action_open_help(self):
         self.push_screen('help')
-
-    def action_focus_viewer(self):
-        self.set_focus(
-            self.query_one(FeatureViewer)
-        )
-
-    def action_maximize_viewer(self):
-        viewport = self.query_one(LocalViewport)
-        if viewport.is_maximized:
-            self.query_one(ViewerScreen).minimize()
-        else:
-            self.query_one(ViewerScreen).maximize(viewport)
 
 
 if __name__ == "__main__":
