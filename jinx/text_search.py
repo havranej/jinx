@@ -55,7 +55,7 @@ class TextSearchScreen(ModalScreen):
     def on_data_table_row_selected(self, event):
         results_display = self.query_one(FeatureQualifiers)
         selected_feature = results_display.current_features.iloc[event.cursor_row]
-        self.dismiss(selected_feature)
+        self.dismiss(selected_feature.name)
 
 
     def action_exit_search(self):

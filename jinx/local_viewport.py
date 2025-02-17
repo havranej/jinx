@@ -56,8 +56,8 @@ class LocalViewport(Static):
         Binding("pageup", "fast_scroll_by(-100)", "Scroll left by 100 cells", show=False, priority=True),
         Binding("home", "fast_scroll_to('home')", "Scroll to beginning", show=False, priority=True),
         Binding("end", "fast_scroll_to('end')", "Scroll to end", show=False, priority=True),
-        Binding("n", "select_feature('next')", "Next feature", show=False, priority=True ),
-        Binding("p", "select_feature('previous')", "Previous feature", show=False, priority=True ),
+        Binding("n", "change_selected_feature('next')", "Next feature", show=False, priority=True ),
+        Binding("p", "change_selected_feature('previous')", "Previous feature", show=False, priority=True ),
         Binding("q", "close_feature_details", "Close feature details", show=False, priority=True ),
         Binding("escape", "close_feature_details", "Close feature details", show=False, priority=True ),
     ]
@@ -117,7 +117,7 @@ class LocalViewport(Static):
 
 
 
-    def action_select_feature(self, direction):
+    def action_change_selected_feature(self, direction):
         feature_viewer = self.query_one(FeatureViewer)
         details_sidebar = self.query_one("#feature-details")
 
@@ -144,3 +144,16 @@ class LocalViewport(Static):
         details_sidebar = self.query_one("#feature-details")
         details_sidebar.styles.display = "none"
     
+    
+    def select_specific_feature(self, feature_id):
+        feature_viewer = self.query_one(FeatureViewer)
+        details_sidebar = self.query_one("#feature-details")
+        
+        feature_viewer.selected_feature = feature_id
+        feature_viewer.scroll_to(
+            int(feature_viewer.seq_features.loc[feature_id, "screen_start"]), # Explicit conversion from np.int64
+            duration=0.5
+        )
+
+        details_sidebar.styles.display = "block"
+        details_sidebar.update(feature_viewer.seq_features.loc[feature_viewer.selected_feature, "formatted_qualifiers"])

@@ -106,13 +106,8 @@ class JinxApp(App):
         if search_result is None:
             return
 
-        feature_viewer = self.query_one(FeatureViewer)
-        # TODO: Make this better
-        feature_viewer.scroll_to(
-            int((search_result.start-1) // feature_viewer.nt_per_square), # Explicit conversion from np.int64
-            duration=0.5
-        )
-        feature_viewer.selected_feature = search_result.name
+        local_viewport = self.query_one(LocalViewport)
+        local_viewport.select_specific_feature(search_result)
 
     def action_open_search(self):
         self.push_screen('text_search', self.evaluate_text_search)
