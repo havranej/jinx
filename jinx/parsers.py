@@ -26,37 +26,37 @@ def parse_genbank(genbank_path):
     # Iterate through genbank CDS records and convert them to a more convenient data frame
     with open(genbank_path) as handle:
         for i, record in enumerate(SeqIO.parse(handle, "genbank")):
-               locus_sequences[record.id] = record.seq
+            locus_sequences[record.id] = record.seq
 
-               formatted_annotations = "\n\n".join([f"**{k}**: {format_annotations(v)}" for k, v in record.annotations.items()])
+            formatted_annotations = "\n\n".join([f"**{k}**: {format_annotations(v)}" for k, v in record.annotations.items()])
 
-               if record.id == "<unknown id>":
-                    record.id = f"LOCUS_{i+1:04d}"
+            if record.id == "<unknown id>":
+                record.id = f"LOCUS_{i+1:04d}"
 
-               locus_data_rows.append(
-                    [record.id, record.name, record.description, record.dbxrefs, record.annotations, formatted_annotations, record.seq, len(record.seq)]
-               )
+            locus_data_rows.append(
+                [record.id, record.name, record.description, record.dbxrefs, record.annotations, formatted_annotations, record.seq, len(record.seq)]
+            )
 
-               for feature in record.features:
-                    feature_type = feature.type
-                    locus = record.id
-                    start = feature.location.start
-                    end = feature.location.end
-                    strand = feature.location.strand
-                    locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
-                    product = feature.qualifiers.get("product", ["no_product"])[0]
-                    gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
-                    label = feature.qualifiers.get("gene", ["no_label"])[0]
+            for feature in record.features:
+                feature_type = feature.type
+                locus = record.id
+                start = feature.location.start
+                end = feature.location.end
+                strand = feature.location.strand
+                locus_tag = feature.qualifiers.get("locus_tag", ["no_tag"])[0]
+                product = feature.qualifiers.get("product", ["no_product"])[0]
+                gene = feature.qualifiers.get("gene", ["no_gene_name"])[0]
+                label = feature.qualifiers.get("gene", ["no_label"])[0]
 
-                    qualifiers_list = []
-                    for k, value_list in feature.qualifiers.items():
-                         for v in value_list:
-                              qualifiers_list.append((k,v))
+                qualifiers_list = []
+                for k, value_list in feature.qualifiers.items():
+                        for v in value_list:
+                            qualifiers_list.append((k,v))
 
-                    qualifiers = "\n".join([f"{k}={v}" for k, v in qualifiers_list])
-                    formatted_qualifiers = "\n\n".join([f"**{k}**: {v}" for k, v in qualifiers_list])
-                    
-                    rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene, label, qualifiers, formatted_qualifiers])
+                qualifiers = "\n".join([f"{k}={v}" for k, v in qualifiers_list])
+                formatted_qualifiers = "\n\n".join([f"**{k}**: {v}" for k, v in qualifiers_list])
+                
+                rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene, label, qualifiers, formatted_qualifiers])
     
     genbank_features = pd.DataFrame(
         rows, 
