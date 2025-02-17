@@ -130,17 +130,13 @@ DataViewer{
     color: $error;
 }
 
-TextSearchScreen {
+ModalScreen {
     align: center middle;
 }
 
-#search-container{
+.large-modal-screen-container{
     width: 90%;
     height: 90%;
-}
-
-GotoPositionScreen {
-    align: center middle;
 }
 
 #goto-container{

@@ -16,7 +16,7 @@ class TextSearchScreen(ModalScreen):
 
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="search-container"):
+        with Vertical(id="search-container", classes="large-modal-screen-container"):
             yield Input(id="text-search-input", placeholder="Search qualifiers")
             with ContentSwitcher(id="search-switcher", initial="search-message"):
                 yield Label("[blue]Empty query", id="search-message")
