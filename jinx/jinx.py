@@ -70,12 +70,12 @@ class JinxApp(App):
         feature_data, locus_data = parse_genbank(path)
         feature_data["label"] = self.determine_labels(feature_data)
 
-        self.feature_data = feature_data.groupby("locus")
+        self.feature_data = feature_data
         self.locus_data = locus_data
         self.current_locus = self.locus_data.index[0]
 
     def get_current_locus_data(self):
-        return self.feature_data.get_group(self.current_locus)
+        return self.feature_data[self.feature_data.locus == self.current_locus]
     
     def get_current_locus_length(self):
         print( self.locus_data.loc[self.current_locus, "sequence_length"] )
@@ -90,9 +90,8 @@ class JinxApp(App):
         self.push_screen('viewer')
 
 
-    def on_locus_switcher_change_current_locus(self, event):
-        self.current_locus = self.locus_data.index[event.locus_index]
-        print(self.current_locus)
+    def switch_locus(self, locus_id):
+        self.current_locus = locus_id
 
         self.query_one(FeatureViewer).change_visible_features(
             genome_length=self.get_current_locus_length(),
@@ -102,6 +101,12 @@ class JinxApp(App):
         self.query_one(LocalViewport).border_title = self.app.current_locus
 
 
+    def on_locus_switcher_change_current_locus(self, event):
+        self.switch_locus(
+            self.locus_data.index[event.locus_index]
+        )
+        
+        
     def evaluate_text_search(self, search_result):
         if search_result is None:
             return
