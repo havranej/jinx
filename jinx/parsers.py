@@ -25,16 +25,19 @@ def parse_genbank(genbank_path):
 
     # Iterate through genbank CDS records and convert them to a more convenient data frame
     with open(genbank_path) as handle:
-        for record in SeqIO.parse(handle, "genbank"):
-            locus_sequences[record.id] = record.seq
+        for i, record in enumerate(SeqIO.parse(handle, "genbank")):
+               locus_sequences[record.id] = record.seq
 
-            formatted_annotations = "\n\n".join([f"**{k}**: {format_annotations(v)}" for k, v in record.annotations.items()])
+               formatted_annotations = "\n\n".join([f"**{k}**: {format_annotations(v)}" for k, v in record.annotations.items()])
 
-            locus_data_rows.append(
-                 [record.id, record.name, record.description, record.dbxrefs, record.annotations, formatted_annotations, record.seq, len(record.seq)]
-            )
+               if record.id == "<unknown id>":
+                    record.id = f"LOCUS_{i+1:04d}"
 
-            for feature in record.features:
+               locus_data_rows.append(
+                    [record.id, record.name, record.description, record.dbxrefs, record.annotations, formatted_annotations, record.seq, len(record.seq)]
+               )
+
+               for feature in record.features:
                     feature_type = feature.type
                     locus = record.id
                     start = feature.location.start
