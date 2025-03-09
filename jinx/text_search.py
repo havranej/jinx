@@ -70,8 +70,8 @@ class TextSearchResults(Horizontal):
 
     def compose(self):
         yield Horizontal(
-            DataTable(cursor_type="row", classes="visible-features-data-table focus-highlight-background"),
-            QualifierViewer(classes="focus-highlight-background")
+            DataTable(cursor_type="row", classes="features-data-table focus-highlight-background"),
+            QualifierViewer(classes="features-details focus-highlight-background")
         ) 
 
     def on_mount(self) -> None:
