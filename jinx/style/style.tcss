@@ -97,13 +97,19 @@ ZoomDetailsBar {
 
 #feature-details {
     dock: right;
-    padding: 1;
+    padding: 1 1 1 1;
     display: none;
     width: 30%;
     height: 100%;
     background: darkcyan;
+    margin-left: 1;
+    border-left: thick gray;
+    scrollbar-size-vertical: 1;
 }
-
+#feature-details:focus {
+    # background-tint: white 20%;
+    border-left: thick orange;
+}
 
 DataViewer{
     height: 4fr;

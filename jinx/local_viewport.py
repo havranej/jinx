@@ -1,11 +1,10 @@
 
-from textual.widgets import Static
+from textual.widgets import Static, RichLog
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from feature_viewer import FeatureViewer
 
 from textual.reactive import reactive
-
 
 class PositionBar(Static):
 
@@ -56,8 +55,8 @@ class LocalViewport(Static):
         Binding("pageup", "fast_scroll_by(-100)", "Scroll left by 100 cells", show=False, priority=True),
         Binding("home", "fast_scroll_to('home')", "Scroll to beginning", show=False, priority=True),
         Binding("end", "fast_scroll_to('end')", "Scroll to end", show=False, priority=True),
-        Binding("n", "change_selected_feature('next')", "Next feature", show=False, priority=True ),
-        Binding("p", "change_selected_feature('previous')", "Previous feature", show=False, priority=True ),
+        Binding("n", "change_selected_feature('next')", "Next feature", show=True, priority=True ),
+        Binding("p", "change_selected_feature('previous')", "Previous feature", show=True, priority=True ),
         Binding("q", "close_feature_details", "Close feature details", show=False, priority=True ),
         Binding("escape", "close_feature_details", "Close feature details", show=False, priority=True ),
     ]
@@ -74,7 +73,7 @@ class LocalViewport(Static):
             FeatureViewer(**self.feature_viewer_kwargs),
             ZoomDetailsBar(),
         )
-        yield Static("Sidebar", id="feature-details")
+        yield RichLog(id="feature-details", wrap=True, min_width=20, markup=True,  auto_scroll=False)
 
 
     def on_feature_viewer_scrolled(self, event):
@@ -133,8 +132,12 @@ class LocalViewport(Static):
             feature_viewer.select_next_feature()
         elif direction == "previous":
             feature_viewer.select_previous_feature()
+        
 
-        details_sidebar.update(feature_viewer.seq_features.loc[feature_viewer.selected_feature].formatted_qualifiers)
+        selected_feature = feature_viewer.seq_features.loc[feature_viewer.selected_feature]
+        details_sidebar.clear()
+        details_sidebar.write(f"[underline]{selected_feature.feature_type} at {selected_feature.locus}:{selected_feature.start}-{selected_feature.end}({'+' if selected_feature.strand == 1 else '-'})[/underline]\n")
+        details_sidebar.write(feature_viewer.seq_features.loc[feature_viewer.selected_feature].formatted_qualifiers)
 
 
     def action_close_feature_details(self):
@@ -156,4 +159,6 @@ class LocalViewport(Static):
         )
 
         details_sidebar.styles.display = "block"
-        details_sidebar.update(feature_viewer.seq_features.loc[feature_viewer.selected_feature, "formatted_qualifiers"])
+                
+        details_sidebar.clear()
+        details_sidebar.write(feature_viewer.seq_features.loc[feature_viewer.selected_feature, "formatted_qualifiers"])

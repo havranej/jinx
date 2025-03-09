@@ -37,7 +37,7 @@ class LocusSwitcherScreen(ModalScreen):
             self.locus_data.formatted_annotations.iloc[event.cursor_row]
         )
     
-    def on_data_table_row_selected(self, event):       
+    def on_data_table_row_selected(self, event):    
         self.dismiss(event.cursor_row)
 
     def action_exit_switcher(self):

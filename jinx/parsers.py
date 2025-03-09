@@ -28,7 +28,7 @@ def parse_genbank(genbank_path):
         for record in SeqIO.parse(handle, "genbank"):
             locus_sequences[record.id] = record.seq
 
-            formatted_annotations = "\n\n".join([f"**{k}**: {format_annotations(v)}" for k, v in record.annotations.items()])
+            formatted_annotations = "\n\n".join([f"[bold]{k}[/bold]: {format_annotations(v)}" for k, v in record.annotations.items()])
 
             locus_data_rows.append(
                  [record.id, record.name, record.description, record.dbxrefs, record.annotations, formatted_annotations, record.seq, len(record.seq)]
@@ -51,7 +51,7 @@ def parse_genbank(genbank_path):
                               qualifiers_list.append((k,v))
 
                     qualifiers = "\n".join([f"{k}={v}" for k, v in qualifiers_list])
-                    formatted_qualifiers = "\n\n".join([f"**{k}**: {v}" for k, v in qualifiers_list])
+                    formatted_qualifiers = "\n\n".join([f"[bold]{k}[/bold]: {v}" for k, v in qualifiers_list])
                     
                     rows.append([feature_type, locus, int(start), int(end), strand, locus_tag, product, gene, label, qualifiers, formatted_qualifiers])
     
