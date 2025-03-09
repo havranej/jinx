@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Vertical, Horizontal, VerticalScroll
-from textual.widgets import RichLog, DataTable
+from textual.widgets import RichLog, DataTable, Label
 
 
 class LocusSwitcherScreen(ModalScreen):
@@ -16,6 +16,7 @@ class LocusSwitcherScreen(ModalScreen):
 
     def compose(self):
         with Vertical(id="locus-switcher-container", classes="large-modal-screen-container"):
+            yield Label("Loci in current file:")
             yield Horizontal(
                 DataTable(cursor_type="row", classes="features-data-table focus-highlight-background"),
                 RichLog(classes="features-details focus-highlight-background", wrap=True, min_width=20, markup=True, auto_scroll=False)

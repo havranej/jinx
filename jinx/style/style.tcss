@@ -174,3 +174,7 @@ ModalScreen {
     width: 1fr;
     padding: 1;
 }
+
+#locus-switcher-container Label {
+    padding: 1;
+}
