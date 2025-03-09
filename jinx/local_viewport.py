@@ -1,8 +1,9 @@
 
-from textual.widgets import Static, RichLog
+from textual.widgets import Static
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from feature_viewer import FeatureViewer
+from qualifier_viewer import QualifierViewer
 
 from textual.reactive import reactive
 
@@ -73,7 +74,7 @@ class LocalViewport(Static):
             FeatureViewer(**self.feature_viewer_kwargs),
             ZoomDetailsBar(),
         )
-        yield RichLog(id="feature-details", wrap=True, min_width=20, markup=True,  auto_scroll=False)
+        yield QualifierViewer(id="feature-details")
 
 
     def on_feature_viewer_scrolled(self, event):
@@ -133,11 +134,8 @@ class LocalViewport(Static):
         elif direction == "previous":
             feature_viewer.select_previous_feature()
         
-
         selected_feature = feature_viewer.seq_features.loc[feature_viewer.selected_feature]
-        details_sidebar.clear()
-        details_sidebar.write(f"[underline]{selected_feature.feature_type} at {selected_feature.locus}:{selected_feature.start}-{selected_feature.end}({'+' if selected_feature.strand == 1 else '-'})[/underline]\n")
-        details_sidebar.write(feature_viewer.seq_features.loc[feature_viewer.selected_feature].formatted_qualifiers)
+        details_sidebar.view_feature(selected_feature)
 
 
     def action_close_feature_details(self):

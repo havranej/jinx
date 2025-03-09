@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Vertical, Horizontal, VerticalScroll
-from textual.widgets import Markdown, DataTable
+from textual.widgets import RichLog, DataTable
 
 
 class LocusSwitcherScreen(ModalScreen):
@@ -18,7 +18,7 @@ class LocusSwitcherScreen(ModalScreen):
         with Vertical(id="locus-switcher-container", classes="large-modal-screen-container"):
             yield Horizontal(
                 DataTable(cursor_type="row", classes="visible-features-data-table focus-highlight-background"),
-                VerticalScroll(Markdown("I am a Markdown", classes="visible-features-details"), classes="focus-highlight-background")
+                RichLog(classes="visible-features-details focus-highlight-background", wrap=True, min_width=20, markup=True, auto_scroll=False)
             )
 
     def on_mount(self) -> None:
@@ -30,12 +30,11 @@ class LocusSwitcherScreen(ModalScreen):
         )
     
     def on_data_table_row_highlighted(self, event):
-        details_markdown = self.query_one(".visible-features-details")
+        details_richlog = self.query_one(".visible-features-details")
         
-        details_markdown.update(
-            "_" + self.locus_data.description.iloc[event.cursor_row] + "_\n\n" +
-            self.locus_data.formatted_annotations.iloc[event.cursor_row]
-        )
+        details_richlog.clear()
+        details_richlog.write("[underline]" + self.locus_data.description.iloc[event.cursor_row] + "[/underline]\n")
+        details_richlog.write(self.locus_data.formatted_annotations.iloc[event.cursor_row])
     
     def on_data_table_row_selected(self, event):    
         self.dismiss(event.cursor_row)

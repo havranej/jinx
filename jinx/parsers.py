@@ -4,12 +4,14 @@ from Bio import SeqIO
 def format_annotations(annot_value):
      if isinstance(annot_value, str):
           if "\n" in annot_value:
-               return "\n```" + annot_value + "\n\n```"
+               return "\n[italic]" + annot_value + "[/italic]\n\n"
           else:
                return annot_value 
         #   return annot_value.replace("\n", "\n\n") # Need double new line for markdown
      elif isinstance(annot_value, list):
-          return "\n" + "\n".join(["* " + format_annotations(av) for av in annot_value])
+          return "\n" + "\n".join(["[green bold] • [/green bold]" + format_annotations(av) for av in annot_value])
+     elif isinstance(annot_value, dict):
+          return "\n" + "\n".join(f"  [green]{k}[/green]: {format_annotations(v)}" for k, v in annot_value.items())
      else:
           return str(annot_value)
 

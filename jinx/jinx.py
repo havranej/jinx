@@ -6,7 +6,6 @@ from textual.screen import Screen
 
 from local_viewport import LocalViewport
 from feature_viewer import FeatureViewer
-from data_viewer import DataViewer
 from goto_position import GotoPositionScreen
 from text_search import TextSearchScreen
 from help_screen import HelpScreen
@@ -29,7 +28,6 @@ class ViewerScreen(Screen):
             genome_length=self.app.get_current_locus_length(), 
             nt_per_square=64,
         )
-        # yield DataViewer()
         yield Footer()
 
     def on_mount(self):
